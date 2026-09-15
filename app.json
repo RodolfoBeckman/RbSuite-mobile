@@ -20,6 +20,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Se necesita acceso a tus fotos para elegir el logo del negocio."
+        }
+      ]
+    ]
   }
 }

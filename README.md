@@ -32,14 +32,29 @@ mismas RPCs/hooks para no duplicar reglas de negocio entre clientes.
   pantalla completa en vez del dropdown flotante de la web), reutilización
   de un producto ya existente en el catálogo compartido al dar de alta, y
   gestión de servicios.
-- Navegación por pestañas inferiores (Dashboard/Pos/Caja/Ventas, +
-  Inventario si el rol aplica) en vez de botones sueltos — más natural en
-  cuanto hay más de 2-3 pantallas.
+- Configuración (solo administrador), con pestañas internas Marca /
+  Sucursales / Equipo / Etiquetas / Auditoría:
+  - Marca: logo elegido desde la galería del celular (`expo-image-picker`,
+    subido al mismo storage que la web) y color de marca vía paleta de
+    swatches + campo hex (no hay `<input type="color">` nativo en RN).
+  - Sucursales: alta/edición (nombre, dirección, zona horaria, activa).
+  - Equipo: invitar (correo/rol/sucursal, vía la Edge Function
+    `invite-team-member`; el link de invitación siempre manda al flujo de
+    "define tu contraseña" de la web, no tiene sentido duplicarlo en la
+    app), editar rol/sucursal, quitar acceso.
+  - Etiquetas: los mismos textos personalizables de la web, ahora también
+    aplicados a los títulos/labels de las pestañas y del POS en la app
+    (antes de esta etapa la app no los leía).
+  - Auditoría: bitácora de acciones sensibles con filtros de fecha y
+    acción.
+- Navegación por pestañas inferiores (Dashboard/Pos/Caja/Ventas +
+  Inventario/Configuración según el rol) en vez de botones sueltos — más
+  natural en cuanto hay más de 2-3 pantallas.
 - Soporte web de Expo activado (`npx expo start --web`) solo como atajo de
   desarrollo para previsualizar sin emulador — el objetivo real es
   iOS/Android. Nota: `Alert.alert` (usado para confirmar acciones
-  destructivas, ej. cancelar venta) no funciona en esa vista web; sí
-  funciona en iOS/Android reales.
+  destructivas, ej. cancelar venta o quitar a alguien del equipo) no
+  funciona en esa vista web; sí funciona en iOS/Android reales.
 
 ## Cómo correrlo
 
@@ -53,5 +68,6 @@ mismas RPCs/hooks para no duplicar reglas de negocio entre clientes.
 ## Siguiente paso
 
 Probarlo en un dispositivo/emulador real (hasta ahora solo se probó en la
-vista web de Expo). Pendiente de una etapa futura: Configuración en móvil
-(marca, sucursales, equipo, etiquetas).
+vista web de Expo) — es la única pantalla del roadmap original que falta
+verificar. Con Dashboard, POS, Caja, Ventas, Inventario y Configuración
+ya construidos, la app móvil tiene paridad funcional completa con la web.

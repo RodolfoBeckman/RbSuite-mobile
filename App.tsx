@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { AuthProvider, useAuth } from './src/auth/AuthContext'
+import { useLabels } from './src/hooks/useLabels'
 import { supabase } from './src/lib/supabase'
 import LoginScreen from './src/screens/LoginScreen'
 import DashboardScreen from './src/screens/DashboardScreen'
@@ -15,6 +16,7 @@ import PosScreen from './src/screens/PosScreen'
 import CajaScreen from './src/screens/CajaScreen'
 import SalesHistoryScreen from './src/screens/SalesHistoryScreen'
 import InventoryScreen from './src/screens/InventoryScreen'
+import ConfiguracionScreen from './src/screens/ConfiguracionScreen'
 
 export type RootStackParamList = {
   Login: undefined
@@ -27,6 +29,7 @@ export type MainTabParamList = {
   Caja: undefined
   Ventas: undefined
   Inventario: undefined
+  Configuracion: undefined
 }
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
@@ -39,6 +42,7 @@ const TAB_ICON: Record<keyof MainTabParamList, string> = {
   Caja: '💵',
   Ventas: '🧾',
   Inventario: '📦',
+  Configuracion: '⚙️',
 }
 
 // Supabase no refresca el token en segundo plano por sí solo en React
@@ -68,7 +72,9 @@ function SignOutButton() {
 
 function MainTabs() {
   const { membership } = useAuth()
+  const labels = useLabels()
   const canSeeInventory = membership?.role === 'administrador' || membership?.role === 'gerente'
+  const canSeeConfig = membership?.role === 'administrador'
 
   return (
     <Tab.Navigator
@@ -76,18 +82,42 @@ function MainTabs() {
         headerRight: SignOutButton,
         tabBarActiveTintColor: '#2563eb',
         tabBarInactiveTintColor: '#94a3b8',
+        tabBarLabelStyle: styles.tabLabel,
         tabBarIcon: () => <Text style={styles.tabIcon}>{TAB_ICON[route.name]}</Text>,
       })}
     >
-      <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'RB Suite' }} />
-      <Tab.Screen name="Pos" component={PosScreen} options={{ title: 'Punto de venta' }} />
-      <Tab.Screen name="Caja" component={CajaScreen} options={{ title: 'Caja' }} />
-      <Tab.Screen name="Ventas" component={SalesHistoryScreen} options={{ title: 'Ventas' }} />
+      <Tab.Screen
+        name="Dashboard"
+        component={DashboardScreen}
+        options={{ title: 'RB Suite', tabBarLabel: labels.navDashboard }}
+      />
+      <Tab.Screen
+        name="Pos"
+        component={PosScreen}
+        options={{ title: labels.posTitle, tabBarLabel: labels.navPos }}
+      />
+      <Tab.Screen
+        name="Caja"
+        component={CajaScreen}
+        options={{ title: 'Caja', tabBarLabel: labels.navCaja }}
+      />
+      <Tab.Screen
+        name="Ventas"
+        component={SalesHistoryScreen}
+        options={{ title: 'Ventas', tabBarLabel: labels.navVentas }}
+      />
       {canSeeInventory && (
         <Tab.Screen
           name="Inventario"
           component={InventoryScreen}
           options={{ title: 'Inventario' }}
+        />
+      )}
+      {canSeeConfig && (
+        <Tab.Screen
+          name="Configuracion"
+          component={ConfiguracionScreen}
+          options={{ title: 'Configuración', tabBarLabel: 'Config' }}
         />
       )}
     </Tab.Navigator>
@@ -147,5 +177,8 @@ const styles = StyleSheet.create({
   },
   tabIcon: {
     fontSize: 18,
+  },
+  tabLabel: {
+    fontSize: 10,
   },
 })

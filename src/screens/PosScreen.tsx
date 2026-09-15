@@ -14,6 +14,7 @@ import BranchPicker from '../components/BranchPicker'
 import { useActiveBranch } from '../hooks/useActiveBranch'
 import { usePosCatalog } from '../hooks/usePosCatalog'
 import { useCreateSale } from '../hooks/useCreateSale'
+import { useLabels } from '../hooks/useLabels'
 import type { CartLine, CatalogItem, PaymentMethod } from '../types'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
@@ -26,6 +27,7 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
 
 export default function PosScreen() {
   const activeBranchId = useActiveBranch()
+  const labels = useLabels()
   const {
     data: catalog,
     isLoading: loadingCatalog,
@@ -112,7 +114,7 @@ export default function PosScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Punto de venta</Text>
+        <Text style={styles.title}>{labels.posTitle}</Text>
         <TextInput
           value={search}
           onChangeText={setSearch}
