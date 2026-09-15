@@ -7,6 +7,8 @@ interface AuthContextValue {
   session: Session | null
   membership: Membership | null
   loading: boolean
+  activeBranchId: string | null
+  setActiveBranchId: (branchId: string | null) => void
   signOut: () => Promise<void>
 }
 
@@ -15,6 +17,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [membership, setMembership] = useState<Membership | null>(null)
+  const [activeBranchId, setActiveBranchId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -33,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!session) {
       setMembership(null)
+      setActiveBranchId(null)
       return
     }
 
@@ -47,11 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       const row = Array.isArray(data) ? data[0] : data
       if (row) {
-        setMembership({
+        const resolved: Membership = {
           businessId: row.business_id,
           branchId: row.branch_id,
           role: row.role,
-        })
+        }
+        setMembership(resolved)
+        setActiveBranchId(resolved.branchId)
       }
     })
     // Igual que en la web: se resuelve por session?.user?.id (estable
@@ -65,7 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, membership, loading, signOut }}>
+    <AuthContext.Provider
+      value={{ session, membership, loading, activeBranchId, setActiveBranchId, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   )

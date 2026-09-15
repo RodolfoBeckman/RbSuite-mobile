@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { AppState } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
@@ -9,8 +10,16 @@ import { AuthProvider, useAuth } from './src/auth/AuthContext'
 import { supabase } from './src/lib/supabase'
 import LoginScreen from './src/screens/LoginScreen'
 import HomeScreen from './src/screens/HomeScreen'
+import PosScreen from './src/screens/PosScreen'
 
-const Stack = createNativeStackNavigator()
+export type RootStackParamList = {
+  Login: undefined
+  Home: undefined
+  Pos: undefined
+}
+
+const Stack = createNativeStackNavigator<RootStackParamList>()
+const queryClient = new QueryClient()
 
 // Supabase no refresca el token en segundo plano por sí solo en React
 // Native; hay que decírselo explícitamente cuando la app vuelve a primer
@@ -44,7 +53,14 @@ function RootNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {session ? (
-          <Stack.Screen name="Home" component={HomeScreen} />
+          <>
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen
+              name="Pos"
+              component={PosScreen}
+              options={{ headerShown: true, title: 'Punto de venta' }}
+            />
+          </>
         ) : (
           <Stack.Screen name="Login" component={LoginScreen} />
         )}
@@ -56,9 +72,11 @@ function RootNavigator() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <RootNavigator />
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <RootNavigator />
+        </AuthProvider>
+      </QueryClientProvider>
       <StatusBar style="auto" />
     </SafeAreaProvider>
   )

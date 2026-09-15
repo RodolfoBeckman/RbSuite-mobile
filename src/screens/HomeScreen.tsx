@@ -1,5 +1,7 @@
+import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useAuth } from '../auth/AuthContext'
+import type { RootStackParamList } from '../../App'
 
 const ROLE_LABEL: Record<string, string> = {
   administrador: 'Administrador',
@@ -7,10 +9,12 @@ const ROLE_LABEL: Record<string, string> = {
   vendedor: 'Vendedor',
 }
 
-// Pantalla de cimientos: confirma que sesión + membership se resuelven
-// igual que en la web. Las pantallas de negocio (POS, Caja, Dashboard)
-// se construyen en una siguiente etapa.
-export default function HomeScreen() {
+type Props = NativeStackScreenProps<RootStackParamList, 'Home'>
+
+// Punto de entrada tras el login: confirma sesión + membership (igual que
+// la web) y da acceso a las pantallas de negocio. Caja/Dashboard quedan
+// para una siguiente etapa.
+export default function HomeScreen({ navigation }: Props) {
   const { session, membership, signOut } = useAuth()
 
   return (
@@ -26,6 +30,10 @@ export default function HomeScreen() {
           value={membership ? (membership.branchId ?? 'Todas las sucursales') : 'Cargando…'}
         />
       </View>
+
+      <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Pos')}>
+        <Text style={styles.primaryButtonText}>Ir al Punto de venta</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity style={styles.button} onPress={signOut}>
         <Text style={styles.buttonText}>Salir</Text>
@@ -83,8 +91,20 @@ const styles = StyleSheet.create({
     maxWidth: '65%',
     textAlign: 'right',
   },
-  button: {
+  primaryButton: {
     marginTop: 24,
+    paddingVertical: 14,
+    borderRadius: 10,
+    backgroundColor: '#2563eb',
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  button: {
+    marginTop: 16,
     alignSelf: 'flex-start',
     paddingVertical: 10,
     paddingHorizontal: 16,

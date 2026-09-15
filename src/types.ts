@@ -10,3 +10,24 @@ export interface Membership {
   branchId: string | null
   role: RoleName
 }
+
+export interface Branch {
+  id: string
+  businessId: string
+  name: string
+}
+
+export interface CatalogItem {
+  itemType: 'product' | 'service'
+  id: string
+  name: string
+  price: number
+  stock: number | null
+}
+
+export interface CartLine {
+  item: CatalogItem
+  quantity: number
+}
+
+export type PaymentMethod = 'cash' | 'card' | 'transfer'
