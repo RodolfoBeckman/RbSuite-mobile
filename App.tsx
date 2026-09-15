@@ -5,17 +5,19 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
-import { ActivityIndicator, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { AuthProvider, useAuth } from './src/auth/AuthContext'
 import { supabase } from './src/lib/supabase'
 import LoginScreen from './src/screens/LoginScreen'
-import HomeScreen from './src/screens/HomeScreen'
+import DashboardScreen from './src/screens/DashboardScreen'
 import PosScreen from './src/screens/PosScreen'
+import CajaScreen from './src/screens/CajaScreen'
 
 export type RootStackParamList = {
   Login: undefined
-  Home: undefined
+  Dashboard: undefined
   Pos: undefined
+  Caja: undefined
 }
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
@@ -37,6 +39,15 @@ function useSupabaseAutoRefresh() {
   }, [])
 }
 
+function SignOutButton() {
+  const { signOut } = useAuth()
+  return (
+    <TouchableOpacity onPress={signOut} hitSlop={8}>
+      <Text style={styles.signOut}>Salir</Text>
+    </TouchableOpacity>
+  )
+}
+
 function RootNavigator() {
   const { session, loading } = useAuth()
   useSupabaseAutoRefresh()
@@ -54,11 +65,20 @@ function RootNavigator() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {session ? (
           <>
-            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen
+              name="Dashboard"
+              component={DashboardScreen}
+              options={{ headerShown: true, title: 'RB Suite', headerRight: SignOutButton }}
+            />
             <Stack.Screen
               name="Pos"
               component={PosScreen}
               options={{ headerShown: true, title: 'Punto de venta' }}
+            />
+            <Stack.Screen
+              name="Caja"
+              component={CajaScreen}
+              options={{ headerShown: true, title: 'Caja' }}
             />
           </>
         ) : (
@@ -88,5 +108,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#0f172a',
+  },
+  signOut: {
+    color: '#dc2626',
+    fontWeight: '600',
+    fontSize: 14,
+    marginRight: 4,
   },
 })

@@ -31,3 +31,66 @@ export interface CartLine {
 }
 
 export type PaymentMethod = 'cash' | 'card' | 'transfer'
+
+export type CashSessionStatus = 'open' | 'closed'
+export type CashMovementType = 'sale' | 'cash_in' | 'cash_out' | 'adjustment'
+
+export interface CashRegister {
+  id: string
+  branchId: string
+  name: string
+}
+
+export interface CashSession {
+  id: string
+  cashRegisterId: string
+  openingAmount: number
+  openedAt: string
+  status: CashSessionStatus
+}
+
+export interface CashMovement {
+  id: string
+  type: CashMovementType
+  amount: number
+  reason: string | null
+  createdAt: string
+}
+
+export interface DashboardSummary {
+  total: number
+  salesCount: number
+  openCashSessions: number
+}
+
+export interface BranchSales {
+  branchId: string
+  branchName: string
+  total: number
+}
+
+export interface SalesTrendPoint {
+  day: string
+  total: number
+}
+
+export interface PaymentMethodTotal {
+  method: PaymentMethod
+  total: number
+}
+
+export interface TopItem {
+  name: string
+  itemType: 'product' | 'service'
+  quantity: number
+  total: number
+}
+
+export interface LowStockItem {
+  businessProductId: string
+  name: string
+  branchId: string
+  branchName: string
+  stock: number
+  minimumStock: number
+}
