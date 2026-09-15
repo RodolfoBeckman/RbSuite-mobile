@@ -1,20 +1,74 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react'
+import { AppState } from 'react-native'
+import { NavigationContainer } from '@react-navigation/native'
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { StatusBar } from 'expo-status-bar'
+import { ActivityIndicator, StyleSheet, View } from 'react-native'
+import { AuthProvider, useAuth } from './src/auth/AuthContext'
+import { supabase } from './src/lib/supabase'
+import LoginScreen from './src/screens/LoginScreen'
+import HomeScreen from './src/screens/HomeScreen'
+
+const Stack = createNativeStackNavigator()
+
+// Supabase no refresca el token en segundo plano por sí solo en React
+// Native; hay que decírselo explícitamente cuando la app vuelve a primer
+// plano (si no, la sesión puede aparecer expirada al reabrir la app).
+function useSupabaseAutoRefresh() {
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        supabase.auth.startAutoRefresh()
+      } else {
+        supabase.auth.stopAutoRefresh()
+      }
+    })
+    return () => subscription.remove()
+  }, [])
+}
+
+function RootNavigator() {
+  const { session, loading } = useAuth()
+  useSupabaseAutoRefresh()
+
+  if (loading) {
+    return (
+      <View style={styles.splash}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    )
+  }
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {session ? (
+          <Stack.Screen name="Home" component={HomeScreen} />
+        ) : (
+          <Stack.Screen name="Login" component={LoginScreen} />
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  )
+}
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <RootNavigator />
+      </AuthProvider>
       <StatusBar style="auto" />
-    </View>
-  );
+    </SafeAreaProvider>
+  )
 }
 
 const styles = StyleSheet.create({
-  container: {
+  splash: {
     flex: 1,
-    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#0f172a',
   },
-});
+})
