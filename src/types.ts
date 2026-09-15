@@ -86,6 +86,17 @@ export interface TopItem {
   total: number
 }
 
+export type SaleStatus = 'completed' | 'cancelled'
+
+export interface Sale {
+  id: string
+  folio: number
+  createdAt: string
+  total: number
+  status: SaleStatus
+  branchName: string
+}
+
 export interface LowStockItem {
   businessProductId: string
   name: string

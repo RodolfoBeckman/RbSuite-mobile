@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { AppState } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
@@ -12,16 +13,30 @@ import LoginScreen from './src/screens/LoginScreen'
 import DashboardScreen from './src/screens/DashboardScreen'
 import PosScreen from './src/screens/PosScreen'
 import CajaScreen from './src/screens/CajaScreen'
+import SalesHistoryScreen from './src/screens/SalesHistoryScreen'
 
 export type RootStackParamList = {
   Login: undefined
+  Main: undefined
+}
+
+export type MainTabParamList = {
   Dashboard: undefined
   Pos: undefined
   Caja: undefined
+  Ventas: undefined
 }
 
-const Stack = createNativeStackNavigator<RootStackParamList>()
+const RootStack = createNativeStackNavigator<RootStackParamList>()
+const Tab = createBottomTabNavigator<MainTabParamList>()
 const queryClient = new QueryClient()
+
+const TAB_ICON: Record<keyof MainTabParamList, string> = {
+  Dashboard: '📊',
+  Pos: '🛒',
+  Caja: '💵',
+  Ventas: '🧾',
+}
 
 // Supabase no refresca el token en segundo plano por sí solo en React
 // Native; hay que decírselo explícitamente cuando la app vuelve a primer
@@ -48,6 +63,24 @@ function SignOutButton() {
   )
 }
 
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerRight: SignOutButton,
+        tabBarActiveTintColor: '#2563eb',
+        tabBarInactiveTintColor: '#94a3b8',
+        tabBarIcon: () => <Text style={styles.tabIcon}>{TAB_ICON[route.name]}</Text>,
+      })}
+    >
+      <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'RB Suite' }} />
+      <Tab.Screen name="Pos" component={PosScreen} options={{ title: 'Punto de venta' }} />
+      <Tab.Screen name="Caja" component={CajaScreen} options={{ title: 'Caja' }} />
+      <Tab.Screen name="Ventas" component={SalesHistoryScreen} options={{ title: 'Ventas' }} />
+    </Tab.Navigator>
+  )
+}
+
 function RootNavigator() {
   const { session, loading } = useAuth()
   useSupabaseAutoRefresh()
@@ -62,29 +95,13 @@ function RootNavigator() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {session ? (
-          <>
-            <Stack.Screen
-              name="Dashboard"
-              component={DashboardScreen}
-              options={{ headerShown: true, title: 'RB Suite', headerRight: SignOutButton }}
-            />
-            <Stack.Screen
-              name="Pos"
-              component={PosScreen}
-              options={{ headerShown: true, title: 'Punto de venta' }}
-            />
-            <Stack.Screen
-              name="Caja"
-              component={CajaScreen}
-              options={{ headerShown: true, title: 'Caja' }}
-            />
-          </>
+          <RootStack.Screen name="Main" component={MainTabs} />
         ) : (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <RootStack.Screen name="Login" component={LoginScreen} />
         )}
-      </Stack.Navigator>
+      </RootStack.Navigator>
     </NavigationContainer>
   )
 }
@@ -114,5 +131,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
     marginRight: 4,
+  },
+  tabIcon: {
+    fontSize: 18,
   },
 })

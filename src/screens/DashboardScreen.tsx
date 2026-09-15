@@ -1,4 +1,4 @@
-import type { NativeStackScreenProps } from '@react-navigation/native-stack'
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg'
 import { useAuth } from '../auth/AuthContext'
@@ -10,7 +10,7 @@ import {
   useSalesTrend,
   useTopItems,
 } from '../hooks/useDashboard'
-import type { RootStackParamList } from '../../App'
+import type { MainTabParamList } from '../../App'
 import type { DashboardSummary } from '../types'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
@@ -161,7 +161,7 @@ function SummaryCard({
   )
 }
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Dashboard'>
+type Props = BottomTabScreenProps<MainTabParamList, 'Dashboard'>
 
 export default function DashboardScreen({ navigation }: Props) {
   const { membership } = useAuth()
@@ -178,7 +178,7 @@ export default function DashboardScreen({ navigation }: Props) {
   const isManager = membership.role === 'administrador' || membership.role === 'gerente'
 
   return isManager ? (
-    <ManagerDashboard summary={summary} loadingSummary={loadingSummary} navigation={navigation} />
+    <ManagerDashboard summary={summary} loadingSummary={loadingSummary} />
   ) : (
     <VendorDashboard summary={summary} loadingSummary={loadingSummary} navigation={navigation} />
   )
@@ -208,9 +208,6 @@ function VendorDashboard({
       <TouchableOpacity style={styles.posBanner} onPress={() => navigation.navigate('Pos')}>
         <Text style={styles.posBannerText}>Ir al punto de venta →</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.secondaryBanner} onPress={() => navigation.navigate('Caja')}>
-        <Text style={styles.secondaryBannerText}>Ir a caja →</Text>
-      </TouchableOpacity>
     </ScrollView>
   )
 }
@@ -218,11 +215,9 @@ function VendorDashboard({
 function ManagerDashboard({
   summary,
   loadingSummary,
-  navigation,
 }: {
   summary?: DashboardSummary
   loadingSummary: boolean
-  navigation: Props['navigation']
 }) {
   const { data: byBranch } = useSalesByBranch()
   const { data: trend } = useSalesTrend(7)
@@ -234,21 +229,6 @@ function ManagerDashboard({
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      <View style={styles.quickActionsRow}>
-        <TouchableOpacity
-          style={styles.quickAction}
-          onPress={() => navigation.navigate('Pos')}
-        >
-          <Text style={styles.quickActionText}>Punto de venta</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.quickAction, styles.quickActionSecondary]}
-          onPress={() => navigation.navigate('Caja')}
-        >
-          <Text style={[styles.quickActionText, styles.quickActionTextSecondary]}>Caja</Text>
-        </TouchableOpacity>
-      </View>
-
       <View style={styles.summaryRow}>
         <SummaryCard
           label="Venta de hoy"
@@ -384,42 +364,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 17,
     fontWeight: '700',
-  },
-  secondaryBanner: {
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  secondaryBannerText: {
-    color: '#334155',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  quickActionsRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  quickAction: {
-    flex: 1,
-    backgroundColor: BRAND,
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  quickActionSecondary: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-  },
-  quickActionText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  quickActionTextSecondary: {
-    color: '#334155',
   },
   card: {
     backgroundColor: '#fff',
