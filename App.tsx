@@ -14,6 +14,7 @@ import DashboardScreen from './src/screens/DashboardScreen'
 import PosScreen from './src/screens/PosScreen'
 import CajaScreen from './src/screens/CajaScreen'
 import SalesHistoryScreen from './src/screens/SalesHistoryScreen'
+import InventoryScreen from './src/screens/InventoryScreen'
 
 export type RootStackParamList = {
   Login: undefined
@@ -25,6 +26,7 @@ export type MainTabParamList = {
   Pos: undefined
   Caja: undefined
   Ventas: undefined
+  Inventario: undefined
 }
 
 const RootStack = createNativeStackNavigator<RootStackParamList>()
@@ -36,6 +38,7 @@ const TAB_ICON: Record<keyof MainTabParamList, string> = {
   Pos: '🛒',
   Caja: '💵',
   Ventas: '🧾',
+  Inventario: '📦',
 }
 
 // Supabase no refresca el token en segundo plano por sí solo en React
@@ -64,6 +67,9 @@ function SignOutButton() {
 }
 
 function MainTabs() {
+  const { membership } = useAuth()
+  const canSeeInventory = membership?.role === 'administrador' || membership?.role === 'gerente'
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -77,6 +83,13 @@ function MainTabs() {
       <Tab.Screen name="Pos" component={PosScreen} options={{ title: 'Punto de venta' }} />
       <Tab.Screen name="Caja" component={CajaScreen} options={{ title: 'Caja' }} />
       <Tab.Screen name="Ventas" component={SalesHistoryScreen} options={{ title: 'Ventas' }} />
+      {canSeeInventory && (
+        <Tab.Screen
+          name="Inventario"
+          component={InventoryScreen}
+          options={{ title: 'Inventario' }}
+        />
+      )}
     </Tab.Navigator>
   )
 }

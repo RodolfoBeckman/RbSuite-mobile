@@ -22,9 +22,24 @@ mismas RPCs/hooks para no duplicar reglas de negocio entre clientes.
 - Caja: abrir/cerrar sesión, movimientos manuales (entrada/retiro) y
   bitácora de movimientos, vía `open_cash_session` / `close_cash_session` /
   `register_cash_movement`.
+- Ventas: historial de los últimos 7 días y cancelar venta (solo
+  administrador/gerente), vía `cancel_sale`.
+- Inventario (solo administrador/gerente), con paridad de funciones con la
+  web: tabla de productos como tarjetas (búsqueda, paginación, edición
+  inline de categoría/precios/stock mínimo/activo), ajuste de stock,
+  catálogos de marca/unidad/familia (globales) y categoría (por negocio)
+  con selector buscar-o-crear (`ComboCreateSelect`, como picker de
+  pantalla completa en vez del dropdown flotante de la web), reutilización
+  de un producto ya existente en el catálogo compartido al dar de alta, y
+  gestión de servicios.
+- Navegación por pestañas inferiores (Dashboard/Pos/Caja/Ventas, +
+  Inventario si el rol aplica) en vez de botones sueltos — más natural en
+  cuanto hay más de 2-3 pantallas.
 - Soporte web de Expo activado (`npx expo start --web`) solo como atajo de
   desarrollo para previsualizar sin emulador — el objetivo real es
-  iOS/Android.
+  iOS/Android. Nota: `Alert.alert` (usado para confirmar acciones
+  destructivas, ej. cancelar venta) no funciona en esa vista web; sí
+  funciona en iOS/Android reales.
 
 ## Cómo correrlo
 
@@ -38,5 +53,5 @@ mismas RPCs/hooks para no duplicar reglas de negocio entre clientes.
 ## Siguiente paso
 
 Probarlo en un dispositivo/emulador real (hasta ahora solo se probó en la
-vista web de Expo). Pendiente de una etapa futura: Ventas (historial +
-cancelar), Inventario y Configuración en móvil.
+vista web de Expo). Pendiente de una etapa futura: Configuración en móvil
+(marca, sucursales, equipo, etiquetas).
