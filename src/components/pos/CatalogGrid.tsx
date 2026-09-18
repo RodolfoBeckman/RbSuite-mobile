@@ -1,5 +1,6 @@
 import { FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native'
 import type { CatalogItem } from '../../types'
+import type { BrandPalette } from '../../theme/useBrandPalette'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
 
@@ -9,10 +10,12 @@ export default function CatalogGrid({
   items,
   loading,
   onAdd,
+  palette,
 }: {
   items: CatalogItem[]
   loading: boolean
   onAdd: (item: CatalogItem) => void
+  palette: BrandPalette
 }) {
   return (
     <FlatList
@@ -27,13 +30,16 @@ export default function CatalogGrid({
         return (
           <TouchableOpacity
             disabled={outOfStock}
+            activeOpacity={0.7}
             onPress={() => onAdd(item)}
             style={[styles.card, outOfStock && styles.cardDisabled]}
           >
             <Text style={styles.cardName} numberOfLines={2}>
               {item.name}
             </Text>
-            <Text style={styles.cardPrice}>{currency.format(item.price)}</Text>
+            <Text style={[styles.cardPrice, { color: palette.dark }]}>
+              {currency.format(item.price)}
+            </Text>
             {item.itemType === 'product' && (
               <Text style={styles.cardStock}>Stock: {item.stock}</Text>
             )}
@@ -66,6 +72,11 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 10,
     minHeight: 88,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   cardDisabled: {
     opacity: 0.4,

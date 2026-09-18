@@ -20,6 +20,7 @@ import { usePosCatalog } from '../hooks/usePosCatalog'
 import { usePosLayout } from '../hooks/usePosLayout'
 import { useCreateSale } from '../hooks/useCreateSale'
 import { useLabels } from '../hooks/useLabels'
+import { useBrandPalette } from '../theme/useBrandPalette'
 import type { CartLine, CatalogItem, PaymentMethod } from '../types'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
@@ -33,6 +34,7 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
 export default function PosScreen() {
   const activeBranchId = useActiveBranch()
   const labels = useLabels()
+  const palette = useBrandPalette()
   const { data: posLayout = 'catalogo' } = usePosLayout()
   const { data: modules } = useBusinessModules()
   const {
@@ -133,11 +135,11 @@ export default function PosScreen() {
         )}
       </View>
 
-      {loadingCatalog && <ActivityIndicator style={styles.loading} color="#2563eb" />}
+      {loadingCatalog && <ActivityIndicator style={styles.loading} color={palette.primary} />}
       {!!catalogError && <Text style={styles.errorText}>No se pudo cargar el catálogo.</Text>}
 
       {posLayout === 'ferreteria' && (
-        <DepartmentList items={filteredCatalog} onAdd={addToCart} />
+        <DepartmentList items={filteredCatalog} onAdd={addToCart} palette={palette} />
       )}
       {posLayout === 'abarrotes' && (
         <ScanTicket
@@ -146,13 +148,19 @@ export default function PosScreen() {
           setSearch={setSearch}
           onAdd={addToCart}
           total={total}
+          palette={palette}
         />
       )}
       {posLayout === 'catalogo' && (
-        <CatalogGrid items={filteredCatalog} loading={loadingCatalog} onAdd={addToCart} />
+        <CatalogGrid
+          items={filteredCatalog}
+          loading={loadingCatalog}
+          onAdd={addToCart}
+          palette={palette}
+        />
       )}
 
-      <TouchableOpacity style={styles.cartBar} onPress={() => setCartOpen(true)}>
+      <TouchableOpacity style={styles.cartBar} activeOpacity={0.85} onPress={() => setCartOpen(true)}>
         <Text style={styles.cartBarText}>
           {cartLines.length > 0 ? `${cartLines.length} · ${currency.format(total)}` : 'Carrito vacío'}
         </Text>
@@ -184,6 +192,7 @@ export default function PosScreen() {
                   <View style={styles.qtyControls}>
                     <TouchableOpacity
                       style={styles.qtyButton}
+                      activeOpacity={0.6}
                       onPress={() => updateQuantity(line.item.id, line.quantity - 1)}
                     >
                       <Text style={styles.qtyButtonText}>−</Text>
@@ -191,6 +200,7 @@ export default function PosScreen() {
                     <Text style={styles.qtyValue}>{line.quantity}</Text>
                     <TouchableOpacity
                       style={styles.qtyButton}
+                      activeOpacity={0.6}
                       onPress={() => updateQuantity(line.item.id, line.quantity + 1)}
                     >
                       <Text style={styles.qtyButtonText}>+</Text>
@@ -202,29 +212,32 @@ export default function PosScreen() {
 
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>{currency.format(total)}</Text>
+              <Text style={[styles.totalValue, { color: palette.dark }]}>
+                {currency.format(total)}
+              </Text>
             </View>
 
             <View style={styles.paymentRow}>
-              {PAYMENT_METHODS.map((method) => (
-                <TouchableOpacity
-                  key={method.value}
-                  onPress={() => setPaymentMethod(method.value)}
-                  style={[
-                    styles.paymentChip,
-                    paymentMethod === method.value && styles.paymentChipActive,
-                  ]}
-                >
-                  <Text
+              {PAYMENT_METHODS.map((method) => {
+                const active = paymentMethod === method.value
+                return (
+                  <TouchableOpacity
+                    key={method.value}
+                    activeOpacity={0.75}
+                    onPress={() => setPaymentMethod(method.value)}
                     style={[
-                      styles.paymentChipText,
-                      paymentMethod === method.value && styles.paymentChipTextActive,
+                      styles.paymentChip,
+                      active && { borderColor: palette.primary, backgroundColor: palette.tint },
                     ]}
                   >
-                    {method.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      style={[styles.paymentChipText, active && { color: palette.dark }]}
+                    >
+                      {method.label}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              })}
             </View>
 
             {feedback && (
@@ -241,8 +254,10 @@ export default function PosScreen() {
             <TouchableOpacity
               style={[
                 styles.checkoutButton,
+                { backgroundColor: palette.primary },
                 (cartLines.length === 0 || createSale.isPending) && styles.checkoutButtonDisabled,
               ]}
+              activeOpacity={0.8}
               disabled={cartLines.length === 0 || createSale.isPending}
               onPress={handleCheckout}
             >
@@ -439,17 +454,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: 'center',
   },
-  paymentChipActive: {
-    borderColor: '#2563eb',
-    backgroundColor: '#dbeafe',
-  },
   paymentChipText: {
     fontSize: 12,
     fontWeight: '600',
     color: '#64748b',
-  },
-  paymentChipTextActive: {
-    color: '#1d4ed8',
   },
   feedback: {
     marginTop: 12,
@@ -464,10 +472,14 @@ const styles = StyleSheet.create({
   },
   checkoutButton: {
     marginTop: 14,
-    backgroundColor: '#2563eb',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   checkoutButtonDisabled: {
     opacity: 0.5,

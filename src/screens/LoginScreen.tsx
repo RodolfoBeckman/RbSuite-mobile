@@ -65,6 +65,7 @@ export default function LoginScreen() {
           style={[styles.button, submitting && styles.buttonDisabled]}
           onPress={handleSubmit}
           disabled={submitting || !email || !password}
+          activeOpacity={0.75}
         >
           {submitting ? (
             <ActivityIndicator color="#fff" />
@@ -88,6 +89,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#1e293b',
     borderRadius: 16,
     padding: 24,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
   title: {
     fontSize: 24,

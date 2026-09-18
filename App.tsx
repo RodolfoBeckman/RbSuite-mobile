@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from './src/auth/AuthContext'
 import { useBusinessModules } from './src/hooks/useBusinessModules'
 import { useLabels } from './src/hooks/useLabels'
 import { supabase } from './src/lib/supabase'
+import { useBrandPalette } from './src/theme/useBrandPalette'
 import LoginScreen from './src/screens/LoginScreen'
 import DashboardScreen from './src/screens/DashboardScreen'
 import PosScreen from './src/screens/PosScreen'
@@ -74,6 +75,7 @@ function SignOutButton() {
 function MainTabs() {
   const { membership } = useAuth()
   const labels = useLabels()
+  const palette = useBrandPalette()
   const { data: modules } = useBusinessModules()
   const canSeeCaja = modules?.caja !== false
   const canSeeInventory =
@@ -85,7 +87,10 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerRight: SignOutButton,
-        tabBarActiveTintColor: '#2563eb',
+        headerStyle: { backgroundColor: palette.primary },
+        headerTintColor: '#fff',
+        headerTitleStyle: styles.headerTitle,
+        tabBarActiveTintColor: palette.primary,
         tabBarInactiveTintColor: '#94a3b8',
         tabBarLabelStyle: styles.tabLabel,
         tabBarIcon: () => <Text style={styles.tabIcon}>{TAB_ICON[route.name]}</Text>,
@@ -177,10 +182,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f172a',
   },
   signOut: {
-    color: '#dc2626',
+    color: '#fff',
     fontWeight: '600',
     fontSize: 14,
     marginRight: 4,
+    opacity: 0.9,
+  },
+  headerTitle: {
+    fontWeight: '700',
   },
   tabIcon: {
     fontSize: 18,

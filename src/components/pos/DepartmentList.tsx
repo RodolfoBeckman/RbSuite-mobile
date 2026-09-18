@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import type { CatalogItem } from '../../types'
+import type { BrandPalette } from '../../theme/useBrandPalette'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
 
@@ -10,9 +11,11 @@ const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: '
 export default function DepartmentList({
   items,
   onAdd,
+  palette,
 }: {
   items: CatalogItem[]
   onAdd: (item: CatalogItem) => void
+  palette: BrandPalette
 }) {
   const sections = useMemo(() => {
     const byDept = new Map<string, CatalogItem[]>()
@@ -34,7 +37,9 @@ export default function DepartmentList({
       contentContainerStyle={styles.list}
       stickySectionHeadersEnabled
       renderSectionHeader={({ section }) => (
-        <Text style={styles.sectionHeader}>{section.title}</Text>
+        <Text style={[styles.sectionHeader, { color: palette.dark, backgroundColor: palette.tint }]}>
+          {section.title}
+        </Text>
       )}
       ListEmptyComponent={<Text style={styles.emptyText}>Sin resultados.</Text>}
       renderItem={({ item }) => {
@@ -42,6 +47,7 @@ export default function DepartmentList({
         return (
           <TouchableOpacity
             disabled={disabled}
+            activeOpacity={0.65}
             onPress={() => onAdd(item)}
             style={[styles.row, disabled && styles.rowDisabled]}
           >
@@ -51,7 +57,9 @@ export default function DepartmentList({
             {item.itemType === 'product' && (
               <Text style={styles.rowStock}>Stock: {item.stock}</Text>
             )}
-            <Text style={styles.rowPrice}>{currency.format(item.price)}</Text>
+            <Text style={[styles.rowPrice, { color: palette.dark }]}>
+              {currency.format(item.price)}
+            </Text>
           </TouchableOpacity>
         )
       }}

@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import type { CatalogItem } from '../../types'
+import type { BrandPalette } from '../../theme/useBrandPalette'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
 
@@ -15,12 +16,14 @@ export default function ScanTicket({
   setSearch,
   onAdd,
   total,
+  palette,
 }: {
   items: CatalogItem[]
   search: string
   setSearch: (value: string) => void
   onAdd: (item: CatalogItem) => void
   total: number
+  palette: BrandPalette
 }) {
   const inputRef = useRef<TextInput>(null)
 
@@ -53,9 +56,9 @@ export default function ScanTicket({
         style={styles.input}
       />
 
-      <View style={styles.totalBox}>
-        <Text style={styles.totalLabel}>Total</Text>
-        <Text style={styles.totalValue}>{currency.format(total)}</Text>
+      <View style={[styles.totalBox, { backgroundColor: palette.tint }]}>
+        <Text style={[styles.totalLabel, { color: palette.primary }]}>Total</Text>
+        <Text style={[styles.totalValue, { color: palette.dark }]}>{currency.format(total)}</Text>
       </View>
 
       {search.trim().length > 0 && (
@@ -69,13 +72,16 @@ export default function ScanTicket({
             return (
               <TouchableOpacity
                 disabled={disabled}
+                activeOpacity={0.7}
                 onPress={() => handleAdd(item)}
                 style={[styles.matchRow, disabled && styles.matchRowDisabled]}
               >
                 <Text style={styles.matchName} numberOfLines={1}>
                   {item.name}
                 </Text>
-                <Text style={styles.matchPrice}>{currency.format(item.price)}</Text>
+                <Text style={[styles.matchPrice, { color: palette.dark }]}>
+                  {currency.format(item.price)}
+                </Text>
               </TouchableOpacity>
             )
           }}

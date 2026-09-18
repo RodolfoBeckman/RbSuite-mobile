@@ -10,14 +10,13 @@ import {
   useSalesTrend,
   useTopItems,
 } from '../hooks/useDashboard'
+import { useBrandPalette } from '../theme/useBrandPalette'
 import type { MainTabParamList } from '../../App'
 import type { DashboardSummary } from '../types'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
 const weekday = new Intl.DateTimeFormat('es-MX', { weekday: 'short' })
 
-const BRAND = '#2563eb'
-const BRAND_LIGHT = '#60a5fa'
 const GOLD = '#b58a2a'
 
 const PAYMENT_LABEL: Record<string, string> = {
@@ -26,13 +25,14 @@ const PAYMENT_LABEL: Record<string, string> = {
   transfer: 'Transferencia',
 }
 
-const PAYMENT_COLOR: Record<string, string> = {
-  cash: BRAND,
-  card: GOLD,
-  transfer: BRAND_LIGHT,
+function paymentColor(method: string, brand: string, brandLight: string): string {
+  if (method === 'cash') return brand
+  if (method === 'card') return GOLD
+  if (method === 'transfer') return brandLight
+  return '#9ca3af'
 }
 
-function TrendArea({ data }: { data: { day: string; total: number }[] }) {
+function TrendArea({ data, brand }: { data: { day: string; total: number }[]; brand: string }) {
   const width = 300
   const height = 120
   const padding = 8
@@ -56,8 +56,8 @@ function TrendArea({ data }: { data: { day: string; total: number }[] }) {
       <Svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`}>
         <Defs>
           <LinearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor={BRAND} stopOpacity={0.35} />
-            <Stop offset="100%" stopColor={BRAND} stopOpacity={0} />
+            <Stop offset="0%" stopColor={brand} stopOpacity={0.35} />
+            <Stop offset="100%" stopColor={brand} stopOpacity={0} />
           </LinearGradient>
         </Defs>
         {points.length > 0 && (
@@ -66,13 +66,13 @@ function TrendArea({ data }: { data: { day: string; total: number }[] }) {
             <Path
               d={linePath}
               fill="none"
-              stroke={BRAND}
+              stroke={brand}
               strokeWidth={2}
               strokeLinejoin="round"
               strokeLinecap="round"
             />
             {points.map((p) => (
-              <Circle key={p.day} cx={p.x} cy={p.y} r={3} fill={BRAND} />
+              <Circle key={p.day} cx={p.x} cy={p.y} r={3} fill={brand} />
             ))}
           </>
         )}
@@ -88,7 +88,15 @@ function TrendArea({ data }: { data: { day: string; total: number }[] }) {
   )
 }
 
-function PaymentDonut({ data }: { data: { method: string; total: number }[] }) {
+function PaymentDonut({
+  data,
+  brand,
+  brandLight,
+}: {
+  data: { method: string; total: number }[]
+  brand: string
+  brandLight: string
+}) {
   const total = data.reduce((sum, d) => sum + d.total, 0)
   const radius = 42
   const circumference = 2 * Math.PI * radius
@@ -110,7 +118,7 @@ function PaymentDonut({ data }: { data: { method: string; total: number }[] }) {
                   cy={50}
                   r={radius}
                   fill="none"
-                  stroke={PAYMENT_COLOR[d.method] ?? '#9ca3af'}
+                  stroke={paymentColor(d.method, brand, brandLight)}
                   strokeWidth={14}
                   strokeDasharray={`${length} ${circumference - length}`}
                   strokeDashoffset={-offset}
@@ -129,7 +137,9 @@ function PaymentDonut({ data }: { data: { method: string; total: number }[] }) {
       <View style={styles.donutLegend}>
         {data.map((d) => (
           <View key={d.method} style={styles.donutLegendRow}>
-            <View style={[styles.donutDot, { backgroundColor: PAYMENT_COLOR[d.method] ?? '#9ca3af' }]} />
+            <View
+              style={[styles.donutDot, { backgroundColor: paymentColor(d.method, brand, brandLight) }]}
+            />
             <Text style={styles.donutLegendLabel}>{PAYMENT_LABEL[d.method] ?? d.method}</Text>
             <Text style={styles.donutLegendValue}>{currency.format(d.total)}</Text>
           </View>
@@ -145,16 +155,23 @@ function SummaryCard({
   value,
   loading,
   tone = 'brand',
+  brandDark,
 }: {
   label: string
   value: string
   loading: boolean
   tone?: 'brand' | 'danger'
+  brandDark: string
 }) {
   return (
     <View style={styles.summaryCard}>
       <Text style={styles.summaryLabel}>{label}</Text>
-      <Text style={[styles.summaryValue, tone === 'danger' && styles.textDanger]}>
+      <Text
+        style={[
+          styles.summaryValue,
+          tone === 'danger' ? styles.textDanger : { color: brandDark },
+        ]}
+      >
         {loading ? '—' : value}
       </Text>
     </View>
@@ -165,12 +182,13 @@ type Props = BottomTabScreenProps<MainTabParamList, 'Dashboard'>
 
 export default function DashboardScreen({ navigation }: Props) {
   const { membership } = useAuth()
+  const palette = useBrandPalette()
   const { data: summary, isLoading: loadingSummary } = useDashboardSummary()
 
   if (!membership) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator style={styles.loading} color={BRAND} />
+        <ActivityIndicator style={styles.loading} color={palette.primary} />
       </View>
     )
   }
@@ -178,9 +196,14 @@ export default function DashboardScreen({ navigation }: Props) {
   const isManager = membership.role === 'administrador' || membership.role === 'gerente'
 
   return isManager ? (
-    <ManagerDashboard summary={summary} loadingSummary={loadingSummary} />
+    <ManagerDashboard summary={summary} loadingSummary={loadingSummary} palette={palette} />
   ) : (
-    <VendorDashboard summary={summary} loadingSummary={loadingSummary} navigation={navigation} />
+    <VendorDashboard
+      summary={summary}
+      loadingSummary={loadingSummary}
+      navigation={navigation}
+      palette={palette}
+    />
   )
 }
 
@@ -188,10 +211,12 @@ function VendorDashboard({
   summary,
   loadingSummary,
   navigation,
+  palette,
 }: {
   summary?: DashboardSummary
   loadingSummary: boolean
   navigation: Props['navigation']
+  palette: { primary: string; dark: string; light: string }
 }) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
@@ -199,13 +224,19 @@ function VendorDashboard({
         label="Ventas de hoy"
         value={`${currency.format(summary?.total ?? 0)} · ${summary?.salesCount ?? 0} ventas`}
         loading={loadingSummary}
+        brandDark={palette.dark}
       />
       <SummaryCard
         label="Cajas abiertas en tu sucursal"
         value={String(summary?.openCashSessions ?? 0)}
         loading={loadingSummary}
+        brandDark={palette.dark}
       />
-      <TouchableOpacity style={styles.posBanner} onPress={() => navigation.navigate('Pos')}>
+      <TouchableOpacity
+        style={[styles.posBanner, { backgroundColor: palette.primary }]}
+        activeOpacity={0.85}
+        onPress={() => navigation.navigate('Pos')}
+      >
         <Text style={styles.posBannerText}>Ir al punto de venta →</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -215,9 +246,11 @@ function VendorDashboard({
 function ManagerDashboard({
   summary,
   loadingSummary,
+  palette,
 }: {
   summary?: DashboardSummary
   loadingSummary: boolean
+  palette: { primary: string; dark: string; light: string }
 }) {
   const { data: byBranch } = useSalesByBranch()
   const { data: trend } = useSalesTrend(7)
@@ -234,36 +267,39 @@ function ManagerDashboard({
           label="Venta de hoy"
           value={`${currency.format(summary?.total ?? 0)} · ${summary?.salesCount ?? 0} ventas`}
           loading={loadingSummary}
+          brandDark={palette.dark}
         />
         <SummaryCard
           label="Cajas abiertas"
           value={String(summary?.openCashSessions ?? 0)}
           loading={loadingSummary}
+          brandDark={palette.dark}
         />
         <SummaryCard
           label="Stock bajo"
           value={String(lowStock?.length ?? 0)}
           loading={false}
           tone={lowStock && lowStock.length > 0 ? 'danger' : 'brand'}
+          brandDark={palette.dark}
         />
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Ventas — últimos 7 días</Text>
+        <Text style={[styles.cardTitle, { color: palette.dark }]}>Ventas — últimos 7 días</Text>
         {trend && trend.length > 0 ? (
-          <TrendArea data={trend} />
+          <TrendArea data={trend} brand={palette.primary} />
         ) : (
           <Text style={styles.emptyText}>Sin datos todavía.</Text>
         )}
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Métodos de pago (7 días)</Text>
-        <PaymentDonut data={paymentMethods ?? []} />
+        <Text style={[styles.cardTitle, { color: palette.dark }]}>Métodos de pago (7 días)</Text>
+        <PaymentDonut data={paymentMethods ?? []} brand={palette.primary} brandLight={palette.light} />
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Venta por sucursal (hoy)</Text>
+        <Text style={[styles.cardTitle, { color: palette.dark }]}>Venta por sucursal (hoy)</Text>
         {(byBranch ?? []).map((branch) => (
           <View key={branch.branchId} style={styles.branchRow}>
             <Text style={styles.branchName} numberOfLines={1}>
@@ -271,7 +307,10 @@ function ManagerDashboard({
             </Text>
             <View style={styles.branchBarTrack}>
               <View
-                style={[styles.branchBarFill, { width: `${(branch.total / maxBranch) * 100}%` }]}
+                style={[
+                  styles.branchBarFill,
+                  { width: `${(branch.total / maxBranch) * 100}%`, backgroundColor: palette.primary },
+                ]}
               />
             </View>
             <Text style={styles.branchTotal}>{currency.format(branch.total)}</Text>
@@ -283,7 +322,7 @@ function ManagerDashboard({
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Más vendidos (30 días)</Text>
+        <Text style={[styles.cardTitle, { color: palette.dark }]}>Más vendidos (30 días)</Text>
         {(topItems ?? []).map((item) => (
           <View key={`${item.itemType}-${item.name}`} style={styles.topItemRow}>
             <Text style={styles.topItemName} numberOfLines={1}>
@@ -343,6 +382,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
     padding: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   summaryLabel: {
     fontSize: 12,
@@ -355,10 +399,14 @@ const styles = StyleSheet.create({
     color: '#1d4ed8',
   },
   posBanner: {
-    backgroundColor: BRAND,
     borderRadius: 14,
     paddingVertical: 32,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   posBannerText: {
     color: '#fff',
@@ -371,6 +419,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
     padding: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   cardTitle: {
     fontSize: 14,
@@ -466,7 +519,6 @@ const styles = StyleSheet.create({
   branchBarFill: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: BRAND,
   },
   branchTotal: {
     width: 76,
