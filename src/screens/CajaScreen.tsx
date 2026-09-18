@@ -22,6 +22,7 @@ import {
 } from '../hooks/useCaja'
 import { useBrandPalette } from '../theme/useBrandPalette'
 import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
+import PendingSyncBanner from '../offline/PendingSyncBanner'
 import type { CashMovementType } from '../types'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
@@ -126,6 +127,7 @@ export default function CajaScreen() {
   if (!session) {
     return (
       <SafeAreaView style={styles.container}>
+        <PendingSyncBanner />
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Abrir caja — {register.name}</Text>
@@ -213,6 +215,7 @@ export default function CajaScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <PendingSyncBanner />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{register.name}</Text>

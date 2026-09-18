@@ -22,6 +22,7 @@ import { useCreateSale } from '../hooks/useCreateSale'
 import { useLabels } from '../hooks/useLabels'
 import { useBrandPalette } from '../theme/useBrandPalette'
 import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
+import PendingSyncBanner from '../offline/PendingSyncBanner'
 import type { CartLine, CatalogItem, PaymentMethod } from '../types'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
@@ -94,16 +95,20 @@ export default function PosScreen() {
     createSale.mutate(
       { branchId: activeBranchId, cartLines, paymentMethod, total },
       {
-        onSuccess: ({ folio }) => {
+        onSuccess: ({ folio, queued }) => {
           setFeedback({
             type: 'success',
-            text: folio ? `Venta registrada — folio ${folio}` : 'Venta registrada',
+            text: queued
+              ? 'Venta guardada — se sincronizará cuando regrese la conexión'
+              : folio
+                ? `Venta registrada — folio ${folio}`
+                : 'Venta registrada',
           })
           setCart(new Map())
           setTimeout(() => {
             setCartOpen(false)
             setFeedback(null)
-          }, 1200)
+          }, queued ? 2200 : 1200)
         },
         onError: (error) => {
           setFeedback({
@@ -125,6 +130,7 @@ export default function PosScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <PendingSyncBanner />
       <View style={styles.header}>
         <Text style={styles.title}>{labels.posTitle}</Text>
         {posLayout !== 'abarrotes' && (
