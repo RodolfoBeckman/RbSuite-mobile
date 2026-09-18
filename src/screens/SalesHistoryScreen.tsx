@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../auth/AuthContext'
 import { hasPermission } from '../auth/permissions'
 import { useCancelSale, useSalesHistory } from '../hooks/useSales'
+import { useBrandPalette } from '../theme/useBrandPalette'
 import type { Sale } from '../types'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
@@ -25,6 +26,7 @@ const dateTime = new Intl.DateTimeFormat('es-MX', {
 export default function SalesHistoryScreen() {
   const { membership } = useAuth()
   const canCancel = hasPermission(membership, 'cancel_sale')
+  const palette = useBrandPalette()
 
   const { data: sales, isLoading, error } = useSalesHistory(7)
   const cancelSale = useCancelSale()
@@ -69,7 +71,7 @@ export default function SalesHistoryScreen() {
             {feedback.text}
           </Text>
         )}
-        {isLoading && <ActivityIndicator style={styles.loading} color="#2563eb" />}
+        {isLoading && <ActivityIndicator style={styles.loading} color={palette.primary} />}
         {!!error && <Text style={styles.textDanger}>No se pudo cargar el historial.</Text>}
       </View>
 
@@ -89,7 +91,9 @@ export default function SalesHistoryScreen() {
               <Text style={styles.rowDate}>{dateTime.format(new Date(sale.createdAt))}</Text>
             </View>
             <View style={styles.rowActions}>
-              <Text style={styles.rowTotal}>{currency.format(sale.total)}</Text>
+              <Text style={[styles.rowTotal, { color: palette.dark }]}>
+                {currency.format(sale.total)}
+              </Text>
               {sale.status === 'cancelled' ? (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>Cancelada</Text>
@@ -97,6 +101,7 @@ export default function SalesHistoryScreen() {
               ) : canCancel ? (
                 <TouchableOpacity
                   style={[styles.cancelButton, cancelSale.isPending && styles.disabled]}
+                  activeOpacity={0.7}
                   disabled={cancelSale.isPending}
                   onPress={() => handleCancel(sale.id, sale.folio)}
                 >
@@ -142,6 +147,11 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
     padding: 12,
     marginBottom: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
   rowInfo: {
     flex: 1,

@@ -20,6 +20,7 @@ import {
   useOpenCashSession,
   useRegisterCashMovement,
 } from '../hooks/useCaja'
+import { useBrandPalette } from '../theme/useBrandPalette'
 import type { CashMovementType } from '../types'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
@@ -33,6 +34,7 @@ const MOVEMENT_LABEL: Record<string, string> = {
 
 export default function CajaScreen() {
   const activeBranchId = useActiveBranch()
+  const palette = useBrandPalette()
   const { data: registers, isLoading: loadingRegisters } = useCashRegisters(activeBranchId)
   const createRegister = useCreateCashRegister()
 
@@ -75,7 +77,7 @@ export default function CajaScreen() {
   if (loadingRegisters) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator style={styles.loading} color="#2563eb" />
+        <ActivityIndicator style={styles.loading} color={palette.primary} />
       </SafeAreaView>
     )
   }
@@ -87,7 +89,12 @@ export default function CajaScreen() {
           <View style={styles.card}>
           <Text style={styles.cardTitle}>Esta sucursal aún no tiene una caja registrada</Text>
           <TouchableOpacity
-            style={[styles.primaryButton, createRegister.isPending && styles.buttonDisabled]}
+            style={[
+              styles.primaryButton,
+              { backgroundColor: palette.primary },
+              createRegister.isPending && styles.buttonDisabled,
+            ]}
+            activeOpacity={0.8}
             disabled={createRegister.isPending}
             onPress={() =>
               createRegister.mutate({ branchId: activeBranchId, name: 'Caja principal' })
@@ -108,7 +115,7 @@ export default function CajaScreen() {
   if (loadingSession) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator style={styles.loading} color="#2563eb" />
+        <ActivityIndicator style={styles.loading} color={palette.primary} />
       </SafeAreaView>
     )
   }
@@ -121,8 +128,8 @@ export default function CajaScreen() {
             <Text style={styles.cardTitle}>Abrir caja — {register.name}</Text>
 
             {closeResult && (
-              <View style={styles.infoBox}>
-                <Text style={styles.infoBoxText}>
+              <View style={[styles.infoBox, { backgroundColor: palette.tint }]}>
+                <Text style={[styles.infoBoxText, { color: palette.dark }]}>
                   Última sesión — esperado: {currency.format(closeResult.expected)}
                 </Text>
                 <Text
@@ -132,7 +139,7 @@ export default function CajaScreen() {
                       ? styles.textSuccess
                       : closeResult.difference < 0
                         ? styles.textDanger
-                        : null,
+                        : { color: palette.dark },
                   ]}
                 >
                   Diferencia: {currency.format(closeResult.difference)}
@@ -162,7 +169,12 @@ export default function CajaScreen() {
             )}
 
             <TouchableOpacity
-              style={[styles.primaryButton, openSession.isPending && styles.buttonDisabled]}
+              style={[
+                styles.primaryButton,
+                { backgroundColor: palette.primary },
+                openSession.isPending && styles.buttonDisabled,
+              ]}
+              activeOpacity={0.8}
               disabled={openSession.isPending}
               onPress={() => {
                 const amount = Number(openingAmount)
@@ -205,14 +217,19 @@ export default function CajaScreen() {
             Abierta {new Date(session.openedAt).toLocaleString('es-MX')}
           </Text>
 
-          <View style={styles.totalBox}>
-            <Text style={styles.totalBoxLabel}>Efectivo esperado ahora</Text>
-            <Text style={styles.totalBoxValue}>{currency.format(runningTotal)}</Text>
+          <View style={[styles.totalBox, { backgroundColor: palette.tint }]}>
+            <Text style={[styles.totalBoxLabel, { color: palette.dark }]}>
+              Efectivo esperado ahora
+            </Text>
+            <Text style={[styles.totalBoxValue, { color: palette.dark }]}>
+              {currency.format(runningTotal)}
+            </Text>
           </View>
 
           <Text style={styles.sectionTitle}>Movimiento manual</Text>
           <View style={styles.segmentRow}>
             <TouchableOpacity
+              activeOpacity={0.75}
               onPress={() => setMovementType('cash_in')}
               style={[
                 styles.segmentButton,
@@ -229,6 +246,7 @@ export default function CajaScreen() {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
+              activeOpacity={0.75}
               onPress={() => setMovementType('cash_out')}
               style={[
                 styles.segmentButton,
@@ -264,6 +282,7 @@ export default function CajaScreen() {
 
           <TouchableOpacity
             style={[styles.secondaryButton, registerMovement.isPending && styles.buttonDisabled]}
+            activeOpacity={0.7}
             disabled={registerMovement.isPending}
             onPress={() => {
               const amount = Number(movementAmount)
@@ -343,7 +362,12 @@ export default function CajaScreen() {
           )}
 
           <TouchableOpacity
-            style={[styles.darkButton, closeSession.isPending && styles.buttonDisabled]}
+            style={[
+              styles.darkButton,
+              { backgroundColor: palette.dark },
+              closeSession.isPending && styles.buttonDisabled,
+            ]}
+            activeOpacity={0.8}
             disabled={closeSession.isPending}
             onPress={() => {
               const amount = Number(countedAmount)
@@ -421,6 +445,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
     padding: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   cardTitle: {
     fontSize: 16,
