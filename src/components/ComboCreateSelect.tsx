@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
+import { useBrandPalette } from '../theme/useBrandPalette'
 
 export interface ComboItem {
   id: string
@@ -36,6 +37,7 @@ export default function ComboCreateSelect({
   placeholder?: string
   disabled?: boolean
 }) {
+  const palette = useBrandPalette()
   const selected = items.find((item) => item.id === value) ?? null
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -63,6 +65,7 @@ export default function ComboCreateSelect({
       {label && <Text style={styles.label}>{label}</Text>}
       <TouchableOpacity
         disabled={disabled}
+        activeOpacity={0.7}
         onPress={() => {
           setQuery('')
           setOpen(true)
@@ -86,7 +89,7 @@ export default function ComboCreateSelect({
               style={styles.searchInput}
             />
             <TouchableOpacity onPress={() => setOpen(false)} hitSlop={8}>
-              <Text style={styles.closeText}>Cerrar</Text>
+              <Text style={[styles.closeText, { color: palette.primary }]}>Cerrar</Text>
             </TouchableOpacity>
           </View>
 
@@ -113,9 +116,11 @@ export default function ComboCreateSelect({
                   onPress={handleCreate}
                 >
                   {creating ? (
-                    <ActivityIndicator color="#2563eb" />
+                    <ActivityIndicator color={palette.primary} />
                   ) : (
-                    <Text style={styles.createOptionText}>+ Agregar "{query.trim()}"</Text>
+                    <Text style={[styles.createOptionText, { color: palette.dark }]}>
+                      + Agregar "{query.trim()}"
+                    </Text>
                   )}
                 </TouchableOpacity>
               ) : null

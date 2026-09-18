@@ -1,6 +1,7 @@
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useAuth } from '../auth/AuthContext'
 import { useBranches } from '../hooks/useBranches'
+import { useBrandPalette } from '../theme/useBrandPalette'
 
 // Administrador y Gerente ven todas las sucursales (branch_id null en su
 // membership), así que eligen desde cuál están operando antes de usar el
@@ -9,21 +10,25 @@ import { useBranches } from '../hooks/useBranches'
 export default function BranchPicker({ title }: { title: string }) {
   const { setActiveBranchId } = useAuth()
   const { data: branches, isLoading } = useBranches()
+  const palette = useBrandPalette()
 
   return (
     <View style={styles.card}>
       <Text style={styles.title}>{title}</Text>
       {isLoading ? (
-        <ActivityIndicator color="#2563eb" />
+        <ActivityIndicator color={palette.primary} />
       ) : (
         <View style={styles.list}>
           {branches?.map((branch) => (
             <TouchableOpacity
               key={branch.id}
+              activeOpacity={0.75}
               onPress={() => setActiveBranchId(branch.id)}
-              style={styles.branchButton}
+              style={[styles.branchButton, { borderColor: palette.primary }]}
             >
-              <Text style={styles.branchButtonText}>{branch.name}</Text>
+              <Text style={[styles.branchButtonText, { color: palette.dark }]}>
+                {branch.name}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>

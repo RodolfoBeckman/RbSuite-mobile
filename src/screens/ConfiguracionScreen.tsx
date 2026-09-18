@@ -40,6 +40,7 @@ import {
   type TeamMember,
 } from '../hooks/useTeam'
 import { useAuditLogs } from '../hooks/useAuditLogs'
+import { useBrandPalette, type BrandPalette } from '../theme/useBrandPalette'
 import type { Labels } from '../labels/defaultLabels'
 import type { PermissionAction, PosLayout, RoleName } from '../types'
 
@@ -78,6 +79,7 @@ function useVisibleSections() {
 
 export default function ConfiguracionScreen() {
   const visibleSections = useVisibleSections()
+  const palette = useBrandPalette()
   const [section, setSection] = useState<SectionKey | null>(null)
   const activeSection = section && visibleSections.some((s) => s.key === section)
     ? section
@@ -102,8 +104,12 @@ export default function ConfiguracionScreen() {
           contentContainerStyle={styles.tabBarContent}
           renderItem={({ item }) => (
             <TouchableOpacity
+              activeOpacity={0.75}
               onPress={() => setSection(item.key)}
-              style={[styles.tabChip, activeSection === item.key && styles.tabChipActive]}
+              style={[
+                styles.tabChip,
+                activeSection === item.key && { backgroundColor: palette.primary, borderColor: palette.primary },
+              ]}
             >
               <Text
                 style={[styles.tabChipText, activeSection === item.key && styles.tabChipTextActive]}
@@ -193,7 +199,7 @@ function BrandingSection() {
   if (isLoading) {
     return (
       <View style={styles.section}>
-        <ActivityIndicator color="#2563eb" />
+        <ActivityIndicator color={color} />
       </View>
     )
   }
@@ -208,6 +214,7 @@ function BrandingSection() {
       <Text style={styles.label}>Logo</Text>
       <TouchableOpacity
         style={styles.logoPicker}
+        activeOpacity={0.7}
         onPress={handlePickLogo}
         disabled={uploadLogo.isPending}
       >
@@ -250,7 +257,8 @@ function BrandingSection() {
       />
 
       <TouchableOpacity
-        style={[styles.saveButton, updateColor.isPending && styles.disabled]}
+        style={[styles.saveButton, { backgroundColor: color }, updateColor.isPending && styles.disabled]}
+        activeOpacity={0.8}
         disabled={updateColor.isPending}
         onPress={handleSaveColor}
       >
@@ -286,29 +294,35 @@ function ChipRow<T extends string>({
   onChange: (value: T) => void
   disabled?: boolean
 }) {
+  const palette = useBrandPalette()
   return (
     <View style={styles.chipRow}>
-      {options.map((option) => (
-        <TouchableOpacity
-          key={option.value}
-          disabled={disabled}
-          onPress={() => onChange(option.value)}
-          style={[
-            styles.chip,
-            value === option.value && styles.chipActive,
-            disabled && styles.disabled,
-          ]}
-        >
-          <Text style={[styles.chipText, value === option.value && styles.chipTextActive]}>
-            {option.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
+      {options.map((option) => {
+        const active = value === option.value
+        return (
+          <TouchableOpacity
+            key={option.value}
+            disabled={disabled}
+            activeOpacity={0.75}
+            onPress={() => onChange(option.value)}
+            style={[
+              styles.chip,
+              active && { borderColor: palette.primary, backgroundColor: palette.tint },
+              disabled && styles.disabled,
+            ]}
+          >
+            <Text style={[styles.chipText, active && { color: palette.dark }]}>
+              {option.label}
+            </Text>
+          </TouchableOpacity>
+        )
+      })}
     </View>
   )
 }
 
 function BranchesSection() {
+  const palette = useBrandPalette()
   const { data: branches, isLoading } = useManageBranches()
   const createBranch = useCreateBranch()
 
@@ -350,10 +364,10 @@ function BranchesSection() {
             Da de alta y edita las sucursales de tu negocio. Desactivar una sucursal la oculta
             del punto de venta sin borrar su historial.
           </Text>
-          {isLoading && <ActivityIndicator color="#2563eb" style={styles.loading} />}
+          {isLoading && <ActivityIndicator color={palette.primary} style={styles.loading} />}
         </View>
       }
-      renderItem={({ item }) => <BranchCard branch={item} />}
+      renderItem={({ item }) => <BranchCard branch={item} palette={palette} />}
       ListEmptyComponent={
         !isLoading ? (
           <Text style={styles.emptyText}>Aún no tienes sucursales registradas.</Text>
@@ -385,8 +399,10 @@ function BranchesSection() {
           <TouchableOpacity
             style={[
               styles.saveButton,
+              { backgroundColor: palette.primary },
               (createBranch.isPending || !newBranch.name.trim()) && styles.disabled,
             ]}
+            activeOpacity={0.8}
             disabled={createBranch.isPending || !newBranch.name.trim()}
             onPress={handleCreate}
           >
@@ -405,7 +421,7 @@ function BranchesSection() {
   )
 }
 
-function BranchCard({ branch }: { branch: BranchDetail }) {
+function BranchCard({ branch, palette }: { branch: BranchDetail; palette: BrandPalette }) {
   const updateBranch = useUpdateBranch()
   const [form, setForm] = useState({
     name: branch.name,
@@ -454,7 +470,12 @@ function BranchCard({ branch }: { branch: BranchDetail }) {
         <Switch value={form.active} onValueChange={(v) => setForm((p) => ({ ...p, active: v }))} />
       </View>
       <TouchableOpacity
-        style={[styles.saveButton, (!dirty || updateBranch.isPending) && styles.disabled]}
+        style={[
+          styles.saveButton,
+          { backgroundColor: palette.primary },
+          (!dirty || updateBranch.isPending) && styles.disabled,
+        ]}
+        activeOpacity={0.8}
         disabled={!dirty || updateBranch.isPending}
         onPress={handleSave}
       >
@@ -475,6 +496,7 @@ const ROLE_OPTIONS: { value: RoleName; label: string }[] = [
 ]
 
 function TeamSection() {
+  const palette = useBrandPalette()
   const { data: members, isLoading } = useTeamMembers()
   const { data: branches } = useBranches()
   const inviteMember = useInviteTeamMember()
@@ -528,10 +550,12 @@ function TeamSection() {
             Invita a tu equipo y asigna su rol y sucursal. Administrador y Gerente ven todas las
             sucursales; un Vendedor queda restringido a la suya.
           </Text>
-          {isLoading && <ActivityIndicator color="#2563eb" style={styles.loading} />}
+          {isLoading && <ActivityIndicator color={palette.primary} style={styles.loading} />}
         </View>
       }
-      renderItem={({ item }) => <TeamMemberCard member={item} branches={branches ?? []} />}
+      renderItem={({ item }) => (
+        <TeamMemberCard member={item} branches={branches ?? []} palette={palette} />
+      )}
       ListEmptyComponent={
         !isLoading ? (
           <Text style={styles.emptyText}>Aún no tienes compañeros invitados.</Text>
@@ -569,8 +593,10 @@ function TeamSection() {
           <TouchableOpacity
             style={[
               styles.saveButton,
+              { backgroundColor: palette.primary },
               (inviteMember.isPending || !invite.email.trim()) && styles.disabled,
             ]}
+            activeOpacity={0.8}
             disabled={inviteMember.isPending || !invite.email.trim()}
             onPress={handleInvite}
           >
@@ -592,9 +618,11 @@ function TeamSection() {
 function TeamMemberCard({
   member,
   branches,
+  palette,
 }: {
   member: TeamMember
   branches: { id: string; name: string }[]
+  palette: BrandPalette
 }) {
   const updateMember = useUpdateTeamMember()
   const removeMember = useRemoveTeamMember()
@@ -676,6 +704,7 @@ function TeamMemberCard({
                   permission.value,
                 )}
                 onValueChange={(v) => togglePermission(permission.value, v)}
+                trackColor={{ true: palette.primary }}
               />
             </View>
           ))}
@@ -686,8 +715,10 @@ function TeamMemberCard({
           style={[
             styles.saveButton,
             styles.rowButtonFlex,
+            { backgroundColor: palette.primary },
             (!dirty || updateMember.isPending) && styles.disabled,
           ]}
+          activeOpacity={0.8}
           disabled={!dirty || updateMember.isPending}
           onPress={handleSave}
         >
@@ -697,6 +728,7 @@ function TeamMemberCard({
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.dangerButton, removeMember.isPending && styles.disabled]}
+          activeOpacity={0.7}
           disabled={removeMember.isPending}
           onPress={handleRemove}
         >
@@ -710,6 +742,7 @@ function TeamMemberCard({
 }
 
 function LabelsSection() {
+  const palette = useBrandPalette()
   const labels = useLabels()
   const updateLabels = useUpdateLabels()
 
@@ -755,7 +788,12 @@ function LabelsSection() {
       ))}
 
       <TouchableOpacity
-        style={[styles.saveButton, updateLabels.isPending && styles.disabled]}
+        style={[
+          styles.saveButton,
+          { backgroundColor: palette.primary },
+          updateLabels.isPending && styles.disabled,
+        ]}
+        activeOpacity={0.8}
         disabled={updateLabels.isPending}
         onPress={handleSave}
       >
@@ -792,6 +830,7 @@ const POS_LAYOUT_OPTIONS: { value: PosLayout; label: string; hint: string }[] = 
 ]
 
 function PosLayoutSection() {
+  const palette = useBrandPalette()
   const { data: posLayout, isLoading } = usePosLayout()
   const updatePosLayout = useUpdatePosLayout()
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
@@ -818,14 +857,21 @@ function PosLayoutSection() {
         Elige el diseño de la pantalla de venta según cómo trabaja tu negocio.
       </Text>
 
-      {isLoading && <ActivityIndicator color="#2563eb" style={styles.loading} />}
+      {isLoading && <ActivityIndicator color={palette.primary} style={styles.loading} />}
 
       {POS_LAYOUT_OPTIONS.map((option) => (
         <TouchableOpacity
           key={option.value}
+          activeOpacity={0.75}
           onPress={() => handleSelect(option.value)}
           disabled={updatePosLayout.isPending}
-          style={[styles.card, posLayout === option.value && styles.optionCardActive]}
+          style={[
+            styles.card,
+            posLayout === option.value && {
+              borderColor: palette.primary,
+              backgroundColor: palette.tint,
+            },
+          ]}
         >
           <Text style={styles.cardName}>{option.label}</Text>
           <Text style={styles.cardCaption}>{option.hint}</Text>
@@ -860,6 +906,7 @@ const MODULE_OPTIONS: { key: keyof BusinessModules; label: string; hint: string 
 ]
 
 function ModulesSection() {
+  const palette = useBrandPalette()
   const { data: modules, isLoading } = useBusinessModules()
   const updateModules = useUpdateBusinessModules()
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
@@ -885,7 +932,7 @@ function ModulesSection() {
   if (isLoading || !modules) {
     return (
       <View style={styles.section}>
-        <ActivityIndicator color="#2563eb" />
+        <ActivityIndicator color={palette.primary} />
       </View>
     )
   }
@@ -909,6 +956,7 @@ function ModulesSection() {
               value={modules[option.key]}
               onValueChange={(v) => handleToggle(option.key, v)}
               disabled={updateModules.isPending}
+              trackColor={{ true: palette.primary }}
             />
           </View>
         </View>
@@ -983,6 +1031,7 @@ function presetRange(preset: string): { from?: Date; to?: Date } {
 }
 
 function AuditLogSection() {
+  const palette = useBrandPalette()
   const [preset, setPreset] = useState('today')
   const [actionFilter, setActionFilter] = useState<string>('')
   const range = presetRange(preset)
@@ -1018,7 +1067,7 @@ function AuditLogSection() {
             value={actionFilter}
             onChange={setActionFilter}
           />
-          {isLoading && <ActivityIndicator color="#2563eb" style={styles.loading} />}
+          {isLoading && <ActivityIndicator color={palette.primary} style={styles.loading} />}
         </View>
       }
       renderItem={({ item: entry }) => {
@@ -1226,6 +1275,11 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
     padding: 14,
     marginBottom: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   dashedCard: {
     borderStyle: 'dashed',
