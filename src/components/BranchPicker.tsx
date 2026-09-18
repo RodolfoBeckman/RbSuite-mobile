@@ -2,6 +2,7 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { useAuth } from '../auth/AuthContext'
 import { useBranches } from '../hooks/useBranches'
 import { useBrandPalette } from '../theme/useBrandPalette'
+import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
 
 // Administrador y Gerente ven todas las sucursales (branch_id null en su
 // membership), así que eligen desde cuál están operando antes de usar el
@@ -11,6 +12,8 @@ export default function BranchPicker({ title }: { title: string }) {
   const { setActiveBranchId } = useAuth()
   const { data: branches, isLoading } = useBranches()
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
 
   return (
     <View style={styles.card}>
@@ -37,36 +40,38 @@ export default function BranchPicker({ title }: { title: string }) {
   )
 }
 
-const styles = StyleSheet.create({
-  card: {
-    margin: 16,
-    padding: 20,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 12,
-  },
-  list: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  branchButton: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  branchButtonText: {
-    color: '#334155',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-})
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    card: {
+      margin: 16,
+      padding: 20,
+      borderRadius: 12,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    title: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 12,
+    },
+    list: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    branchButton: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+    },
+    branchButtonText: {
+      color: colors.textSecondary,
+      fontWeight: '600',
+      fontSize: 14,
+    },
+  })
+}

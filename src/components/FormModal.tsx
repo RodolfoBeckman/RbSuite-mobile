@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
+import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
 
 // Mismo comportamiento que el Modal de la web: cerrar con la "X" no pide
 // confirmación (el usuario ya decidió), pero si hay datos capturados
@@ -26,6 +27,9 @@ export default function FormModal({
   isDirty?: boolean
   children: ReactNode
 }) {
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
+
   function requestClose() {
     if (isDirty) {
       Alert.alert('¿Cerrar sin guardar?', 'Se perderá lo que capturaste.', [
@@ -57,33 +61,35 @@ export default function FormModal({
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    paddingTop: 48,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  closeText: {
-    fontSize: 18,
-    color: '#94a3b8',
-    padding: 4,
-  },
-  content: {
-    padding: 16,
-    gap: 10,
-  },
-})
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      paddingTop: 48,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    title: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    closeText: {
+      fontSize: 18,
+      color: colors.textMuted,
+      padding: 4,
+    },
+    content: {
+      padding: 16,
+      gap: 10,
+    },
+  })
+}

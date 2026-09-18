@@ -12,6 +12,8 @@ import { useBusinessModules } from './src/hooks/useBusinessModules'
 import { useLabels } from './src/hooks/useLabels'
 import { supabase } from './src/lib/supabase'
 import { useBrandPalette } from './src/theme/useBrandPalette'
+import { ThemeProvider, useTheme } from './src/theme/ThemeContext'
+import { useThemeColors } from './src/theme/useThemeColors'
 import LoginScreen from './src/screens/LoginScreen'
 import DashboardScreen from './src/screens/DashboardScreen'
 import PosScreen from './src/screens/PosScreen'
@@ -72,10 +74,20 @@ function SignOutButton() {
   )
 }
 
+function ThemeToggleButton() {
+  const { theme, toggleTheme } = useTheme()
+  return (
+    <TouchableOpacity onPress={toggleTheme} hitSlop={8} style={styles.themeToggle}>
+      <Text style={styles.themeToggleIcon}>{theme === 'dark' ? '☀️' : '🌙'}</Text>
+    </TouchableOpacity>
+  )
+}
+
 function MainTabs() {
   const { membership } = useAuth()
   const labels = useLabels()
   const palette = useBrandPalette()
+  const colors = useThemeColors()
   const { data: modules } = useBusinessModules()
   const canSeeCaja = modules?.caja !== false
   const canSeeInventory =
@@ -87,11 +99,13 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerRight: SignOutButton,
+        headerLeft: ThemeToggleButton,
         headerStyle: { backgroundColor: palette.primary },
         headerTintColor: '#fff',
         headerTitleStyle: styles.headerTitle,
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
         tabBarActiveTintColor: palette.primary,
-        tabBarInactiveTintColor: '#94a3b8',
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: styles.tabLabel,
         tabBarIcon: () => <Text style={styles.tabIcon}>{TAB_ICON[route.name]}</Text>,
       })}
@@ -138,38 +152,44 @@ function MainTabs() {
 
 function RootNavigator() {
   const { session, loading } = useAuth()
+  const { theme } = useTheme()
+  const colors = useThemeColors()
   useSupabaseAutoRefresh()
 
   if (loading) {
     return (
-      <View style={styles.splash}>
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View style={[styles.splash, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.text} />
       </View>
     )
   }
 
   return (
-    <NavigationContainer>
-      <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        {session ? (
-          <RootStack.Screen name="Main" component={MainTabs} />
-        ) : (
-          <RootStack.Screen name="Login" component={LoginScreen} />
-        )}
-      </RootStack.Navigator>
-    </NavigationContainer>
+    <>
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+      <NavigationContainer>
+        <RootStack.Navigator screenOptions={{ headerShown: false }}>
+          {session ? (
+            <RootStack.Screen name="Main" component={MainTabs} />
+          ) : (
+            <RootStack.Screen name="Login" component={LoginScreen} />
+          )}
+        </RootStack.Navigator>
+      </NavigationContainer>
+    </>
   )
 }
 
 export default function App() {
   return (
     <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <RootNavigator />
-        </AuthProvider>
-      </QueryClientProvider>
-      <StatusBar style="auto" />
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <RootNavigator />
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   )
 }
@@ -179,7 +199,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0f172a',
   },
   signOut: {
     color: '#fff',
@@ -187,6 +206,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginRight: 4,
     opacity: 0.9,
+  },
+  themeToggle: {
+    marginLeft: 12,
+  },
+  themeToggleIcon: {
+    fontSize: 18,
   },
   headerTitle: {
     fontWeight: '700',

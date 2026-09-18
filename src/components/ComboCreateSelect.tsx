@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native'
 import { useBrandPalette } from '../theme/useBrandPalette'
+import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
 
 export interface ComboItem {
   id: string
@@ -38,6 +39,8 @@ export default function ComboCreateSelect({
   disabled?: boolean
 }) {
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const selected = items.find((item) => item.id === value) ?? null
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -85,7 +88,7 @@ export default function ComboCreateSelect({
               value={query}
               onChangeText={setQuery}
               placeholder={placeholder ?? 'Buscar…'}
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor={colors.placeholder}
               style={styles.searchInput}
             />
             <TouchableOpacity onPress={() => setOpen(false)} hitSlop={8}>
@@ -132,84 +135,84 @@ export default function ComboCreateSelect({
   )
 }
 
-const styles = StyleSheet.create({
-  label: {
-    fontSize: 13,
-    color: '#475569',
-    marginBottom: 6,
-  },
-  field: {
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 10,
-  },
-  fieldDisabled: {
-    opacity: 0.5,
-  },
-  fieldValue: {
-    fontSize: 14,
-    color: '#0f172a',
-  },
-  fieldPlaceholder: {
-    fontSize: 14,
-    color: '#94a3b8',
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-    paddingTop: 48,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  searchInput: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#0f172a',
-  },
-  closeText: {
-    color: '#2563eb',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  option: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  optionText: {
-    fontSize: 14,
-    color: '#0f172a',
-  },
-  emptyText: {
-    padding: 16,
-    color: '#94a3b8',
-    fontSize: 13,
-  },
-  createOption: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  createOptionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1d4ed8',
-  },
-})
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    label: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginBottom: 6,
+    },
+    field: {
+      backgroundColor: colors.surfaceAlt,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      marginBottom: 10,
+    },
+    fieldDisabled: {
+      opacity: 0.5,
+    },
+    fieldValue: {
+      fontSize: 14,
+      color: colors.text,
+    },
+    fieldPlaceholder: {
+      fontSize: 14,
+      color: colors.placeholder,
+    },
+    modalContainer: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      paddingTop: 48,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingHorizontal: 16,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    searchInput: {
+      flex: 1,
+      backgroundColor: colors.surfaceAlt,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 14,
+      color: colors.text,
+    },
+    closeText: {
+      fontWeight: '600',
+      fontSize: 14,
+    },
+    option: {
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    },
+    optionText: {
+      fontSize: 14,
+      color: colors.text,
+    },
+    emptyText: {
+      padding: 16,
+      color: colors.textMuted,
+      fontSize: 13,
+    },
+    createOption: {
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+    },
+    createOptionText: {
+      fontSize: 14,
+      fontWeight: '600',
+    },
+  })
+}
