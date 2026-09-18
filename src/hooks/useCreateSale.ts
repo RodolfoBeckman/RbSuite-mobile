@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import { isDeviceOffline } from '../offline/isOffline'
 import { enqueue } from '../offline/queue'
 import { generateUuid } from '../offline/uuid'
 import type { CartLine, PaymentMethod } from '../types'
@@ -73,8 +74,14 @@ export function useCreateSale() {
         return { saleId, folio: sale?.folio ?? null, queued: false }
       } catch (error) {
         // Un rechazo real del servidor (ej. stock insuficiente, sucursal
-        // inválida) nunca se encola — reintentarlo no lo va a arreglar.
-        if (isServerRejection(error)) throw error
+        // inválida) nunca se encola — reintentarlo no lo va a arreglar. Pero
+        // primero se pregunta a NetInfo si de verdad hay señal: un fallo de
+        // red en RN no siempre llega como un error "limpio" sin `code`, y
+        // confiar solo en la forma del error dejaba pasar ventas offline
+        // como si fueran rechazos reales (bug reportado: "No se pudo
+        // realizar la venta" en modo avión). Sin señal, siempre se encola.
+        const offline = await isDeviceOffline()
+        if (!offline && isServerRejection(error)) throw error
 
         await enqueue({ id: saleId, kind: 'create_sale', branchId, payload })
         return { saleId, folio: null, queued: true }

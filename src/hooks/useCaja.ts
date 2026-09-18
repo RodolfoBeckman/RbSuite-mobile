@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import { isDeviceOffline } from '../offline/isOffline'
 import { enqueue, findPendingMovements, findPendingOpenSession } from '../offline/queue'
 import { generateUuid } from '../offline/uuid'
 import type { CashMovement, CashMovementType, CashRegister, CashSession } from '../types'
@@ -165,7 +166,8 @@ export function useOpenCashSession() {
         if (error) throw error
         return { sessionId, queued: false }
       } catch (error) {
-        if (isServerRejection(error)) throw error
+        const offline = await isDeviceOffline()
+        if (!offline && isServerRejection(error)) throw error
 
         await enqueue({ id: sessionId, kind: 'open_cash_session', cashRegisterId, payload })
         return { sessionId, queued: true }
@@ -219,7 +221,8 @@ export function useCloseCashSession() {
         // diferencia de abrir caja / cobrar / mover efectivo, esto no se
         // encola: se bloquea con un mensaje claro y se reintenta cuando
         // regrese la conexión.
-        if (!isServerRejection(error)) {
+        const offline = await isDeviceOffline()
+        if (offline || !isServerRejection(error)) {
           throw new Error('Necesitas conexión para cerrar caja — inténtalo de nuevo en un momento.')
         }
         throw error
@@ -262,7 +265,8 @@ export function useRegisterCashMovement() {
         if (error) throw error
         return { movementId, queued: false }
       } catch (error) {
-        if (isServerRejection(error)) throw error
+        const offline = await isDeviceOffline()
+        if (!offline && isServerRejection(error)) throw error
 
         await enqueue({ id: movementId, kind: 'register_cash_movement', sessionId, payload })
         return { movementId, queued: true }

@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import { isDeviceOffline } from './isOffline'
 import {
   loadQueue,
   markAttempt,
@@ -40,7 +41,11 @@ async function runAction(item: QueueAction): Promise<RunResult> {
     if (error) throw error
     return { ok: true }
   } catch (error) {
-    if (isServerRejection(error)) {
+    // Igual que en useCreateSale/useCaja: NetInfo manda sobre la forma del
+    // error — si no hay señal, siempre se trata como fallo de red, sin
+    // importar qué forma traiga el error capturado.
+    const offline = await isDeviceOffline()
+    if (!offline && isServerRejection(error)) {
       return { ok: false, kind: 'rejected', message: error.message }
     }
     return { ok: false, kind: 'network' }
