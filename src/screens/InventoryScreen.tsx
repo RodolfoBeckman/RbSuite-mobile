@@ -37,6 +37,7 @@ import {
   type ServiceItem,
 } from '../hooks/useInventory'
 import { useBrandPalette, type BrandPalette } from '../theme/useBrandPalette'
+import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
 
 const PAGE_SIZES = [10, 25, 50]
 
@@ -44,6 +45,8 @@ export default function InventoryScreen() {
   const activeBranchId = useActiveBranch()
   const { data: modules } = useBusinessModules()
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const [tab, setTab] = useState<'productos' | 'servicios'>('productos')
 
   useEffect(() => {
@@ -96,6 +99,8 @@ function TabButton({
   label: string
   palette: BrandPalette
 }) {
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -109,6 +114,8 @@ function TabButton({
 
 function ProductsSection({ branchId }: { branchId: string }) {
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
   const [search, setSearch] = useState('')
@@ -139,7 +146,7 @@ function ProductsSection({ branchId }: { branchId: string }) {
           value={search}
           onChangeText={handleSearchChange}
           placeholder="Buscar por nombre o código de barras…"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={colors.placeholder}
         />
         <TouchableOpacity
           style={[styles.addButton, { backgroundColor: palette.primary }]}
@@ -227,6 +234,8 @@ function ProductCard({
   branchId: string
   palette: BrandPalette
 }) {
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const updateProduct = useUpdateProduct()
   const { data: categories } = useCategories()
   const createCategory = useCreateCategory()
@@ -364,6 +373,8 @@ function AdjustStockModal({
 }) {
   const adjustStock = useAdjustStock()
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const [quantity, setQuantity] = useState('')
   const [reason, setReason] = useState('')
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
@@ -400,14 +411,14 @@ function AdjustStockModal({
         style={styles.input}
         keyboardType="decimal-pad"
         placeholder="Cantidad (positivo entra, negativo sale)"
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor={colors.placeholder}
         value={quantity}
         onChangeText={setQuantity}
       />
       <TextInput
         style={styles.input}
         placeholder="Motivo (ej. compra, merma, conteo)"
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor={colors.placeholder}
         value={reason}
         onChangeText={setReason}
       />
@@ -437,6 +448,8 @@ function AdjustStockModal({
 function ProductFormModal({ branchId, onClose }: { branchId: string; onClose: () => void }) {
   const createProduct = useCreateProduct()
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const { data: brands } = useBrands()
   const { data: units } = useUnits()
   const { data: families } = useProductFamilies()
@@ -522,7 +535,7 @@ function ProductFormModal({ branchId, onClose }: { branchId: string; onClose: ()
             value={searchTerm}
             onChangeText={setSearchTerm}
             placeholder="Ej. Shampoo 400ml o el código de barras"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={colors.placeholder}
           />
           {searchTerm.trim().length >= 2 && (
             <View style={styles.matchList}>
@@ -705,6 +718,8 @@ function ProductFormModal({ branchId, onClose }: { branchId: string; onClose: ()
 
 function ServicesSection() {
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const { data: services, isLoading } = useServicesAdmin()
   const createService = useCreateService()
 
@@ -812,6 +827,8 @@ function ServicesSection() {
 }
 
 function ServiceCard({ service, palette }: { service: ServiceItem; palette: BrandPalette }) {
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const updateService = useUpdateService()
   const [form, setForm] = useState({
     name: service.name,
@@ -892,285 +909,273 @@ function ServiceCard({ service, palette }: { service: ServiceItem; palette: Bran
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  tabRow: {
-    flexDirection: 'row',
-    gap: 8,
-    padding: 16,
-    paddingBottom: 8,
-  },
-  tabButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  tabButtonActive: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
-  },
-  tabButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#64748b',
-  },
-  tabButtonTextActive: {
-    color: '#fff',
-  },
-  section: {
-    flex: 1,
-  },
-  sectionHeader: {
-    paddingHorizontal: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  sectionSubtitle: {
-    fontSize: 12,
-    color: '#64748b',
-    marginTop: 2,
-    marginBottom: 10,
-  },
-  searchRow: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 16,
-    marginBottom: 10,
-  },
-  searchInput: {
-    flex: 1,
-    marginBottom: 0,
-  },
-  addButton: {
-    backgroundColor: '#2563eb',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    justifyContent: 'center',
-  },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  loading: {
-    marginVertical: 12,
-  },
-  list: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-    gap: 10,
-  },
-  emptyText: {
-    fontSize: 13,
-    color: '#94a3b8',
-    paddingVertical: 8,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 14,
-    marginBottom: 10,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  newServiceCard: {
-    borderStyle: 'dashed',
-  },
-  cardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  cardTopInfo: {
-    flex: 1,
-  },
-  cardName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  cardCaption: {
-    fontSize: 12,
-    color: '#94a3b8',
-  },
-  label: {
-    fontSize: 12,
-    color: '#475569',
-    marginBottom: 4,
-  },
-  input: {
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    fontSize: 14,
-    color: '#0f172a',
-    marginBottom: 8,
-  },
-  row2: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  rowField: {
-    flex: 1,
-  },
-  stockRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  stockText: {
-    fontSize: 13,
-    color: '#334155',
-    fontWeight: '600',
-  },
-  adjustLink: {
-    fontSize: 12,
-    color: '#1d4ed8',
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-  },
-  saveButton: {
-    backgroundColor: '#2563eb',
-    borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  textSuccess: {
-    color: '#16a34a',
-    fontSize: 12,
-  },
-  textDanger: {
-    color: '#dc2626',
-    fontSize: 12,
-  },
-  subtitleText: {
-    fontSize: 13,
-    color: '#64748b',
-  },
-  paginationBlock: {
-    marginTop: 4,
-    gap: 10,
-  },
-  pageSizeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  pageSizeChip: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  pageSizeChipActive: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
-  },
-  pageSizeChipText: {
-    fontSize: 12,
-    color: '#64748b',
-    fontWeight: '600',
-  },
-  pageSizeChipTextActive: {
-    color: '#fff',
-  },
-  totalText: {
-    marginLeft: 6,
-    fontSize: 12,
-    color: '#94a3b8',
-  },
-  pagerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  pagerButton: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  pagerButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#334155',
-  },
-  pagerLabel: {
-    fontSize: 12,
-    color: '#64748b',
-  },
-  matchList: {
-    gap: 6,
-    marginTop: 4,
-    marginBottom: 8,
-  },
-  matchOwned: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    padding: 10,
-  },
-  matchOwnedText: {
-    fontSize: 13,
-    color: '#94a3b8',
-  },
-  matchOption: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    padding: 10,
-  },
-  matchOptionText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#0f172a',
-  },
-  reuseBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    borderWidth: 1,
-    borderColor: '#2563eb',
-    backgroundColor: '#dbeafe',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 8,
-  },
-  reuseTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1d4ed8',
-  },
-  changeLink: {
-    fontSize: 12,
-    color: '#64748b',
-  },
-})
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    tabRow: {
+      flexDirection: 'row',
+      gap: 8,
+      padding: 16,
+      paddingBottom: 8,
+    },
+    tabButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 10,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    tabButtonText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textSecondary,
+    },
+    tabButtonTextActive: {
+      color: '#fff',
+    },
+    section: {
+      flex: 1,
+    },
+    sectionHeader: {
+      paddingHorizontal: 16,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    sectionSubtitle: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginTop: 2,
+      marginBottom: 10,
+    },
+    searchRow: {
+      flexDirection: 'row',
+      gap: 8,
+      paddingHorizontal: 16,
+      marginBottom: 10,
+    },
+    searchInput: {
+      flex: 1,
+      marginBottom: 0,
+    },
+    addButton: {
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      justifyContent: 'center',
+    },
+    addButtonText: {
+      color: '#fff',
+      fontWeight: '700',
+      fontSize: 13,
+    },
+    loading: {
+      marginVertical: 12,
+    },
+    list: {
+      paddingHorizontal: 16,
+      paddingBottom: 24,
+      gap: 10,
+    },
+    emptyText: {
+      fontSize: 13,
+      color: colors.textMuted,
+      paddingVertical: 8,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 14,
+      marginBottom: 10,
+      gap: 8,
+      shadowColor: '#000',
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 1,
+    },
+    newServiceCard: {
+      borderStyle: 'dashed',
+    },
+    cardTopRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    cardTopInfo: {
+      flex: 1,
+    },
+    cardName: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    cardCaption: {
+      fontSize: 12,
+      color: colors.textMuted,
+    },
+    label: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginBottom: 4,
+    },
+    input: {
+      backgroundColor: colors.surfaceAlt,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 9,
+      fontSize: 14,
+      color: colors.text,
+      marginBottom: 8,
+    },
+    row2: {
+      flexDirection: 'row',
+      gap: 10,
+    },
+    rowField: {
+      flex: 1,
+    },
+    stockRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    stockText: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    adjustLink: {
+      fontSize: 12,
+      fontWeight: '600',
+      textDecorationLine: 'underline',
+    },
+    saveButton: {
+      borderRadius: 10,
+      paddingVertical: 10,
+      alignItems: 'center',
+    },
+    saveButtonText: {
+      color: '#fff',
+      fontWeight: '700',
+      fontSize: 13,
+    },
+    disabled: {
+      opacity: 0.5,
+    },
+    textSuccess: {
+      color: colors.success,
+      fontSize: 12,
+    },
+    textDanger: {
+      color: colors.danger,
+      fontSize: 12,
+    },
+    subtitleText: {
+      fontSize: 13,
+      color: colors.textSecondary,
+    },
+    paginationBlock: {
+      marginTop: 4,
+      gap: 10,
+    },
+    pageSizeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    pageSizeChip: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+    },
+    pageSizeChipText: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    pageSizeChipTextActive: {
+      color: '#fff',
+    },
+    totalText: {
+      marginLeft: 6,
+      fontSize: 12,
+      color: colors.textMuted,
+    },
+    pagerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    pagerButton: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    pagerButtonText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textSecondary,
+    },
+    pagerLabel: {
+      fontSize: 12,
+      color: colors.textSecondary,
+    },
+    matchList: {
+      gap: 6,
+      marginTop: 4,
+      marginBottom: 8,
+    },
+    matchOwned: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      padding: 10,
+    },
+    matchOwnedText: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    matchOption: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      padding: 10,
+    },
+    matchOptionText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    reuseBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      borderWidth: 1,
+      borderRadius: 10,
+      padding: 12,
+      marginBottom: 8,
+    },
+    reuseTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    changeLink: {
+      fontSize: 12,
+      color: colors.textSecondary,
+    },
+  })
+}
