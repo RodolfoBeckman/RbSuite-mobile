@@ -2,9 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth/AuthContext'
+import { BRANCHES_CACHE_KEY, fetchBranches } from '../offline/branchesCache'
 import type { Branch } from '../types'
-
-const BRANCHES_CACHE_KEY = 'rb-suite-branches-cache'
 
 // RLS ya limita esto a las sucursales del negocio actual (y, si el usuario
 // tiene branch_id fijo, a esa única sucursal vía current_branch_ids()).
@@ -19,19 +18,7 @@ export function useBranches() {
     queryKey: ['branches'],
     queryFn: async (): Promise<Branch[]> => {
       try {
-        const { data, error } = await supabase
-          .from('branches')
-          .select('id, business_id, name')
-          .eq('active', true)
-          .order('name')
-
-        if (error) throw error
-
-        const branches = (data ?? []).map((row) => ({
-          id: row.id,
-          businessId: row.business_id,
-          name: row.name,
-        }))
+        const branches = await fetchBranches()
         await AsyncStorage.setItem(BRANCHES_CACHE_KEY, JSON.stringify(branches))
         return branches
       } catch (error) {
