@@ -41,6 +41,7 @@ import {
 } from '../hooks/useTeam'
 import { useAuditLogs } from '../hooks/useAuditLogs'
 import { useBrandPalette, type BrandPalette } from '../theme/useBrandPalette'
+import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
 import type { Labels } from '../labels/defaultLabels'
 import type { PermissionAction, PosLayout, RoleName } from '../types'
 
@@ -80,6 +81,8 @@ function useVisibleSections() {
 export default function ConfiguracionScreen() {
   const visibleSections = useVisibleSections()
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const [section, setSection] = useState<SectionKey | null>(null)
   const activeSection = section && visibleSections.some((s) => s.key === section)
     ? section
@@ -145,6 +148,8 @@ const PRESET_COLORS = [
 ]
 
 function BrandingSection() {
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const { data: branding, isLoading } = useBranding()
   const updateColor = useUpdateBrandColor()
   const uploadLogo = useUploadLogo()
@@ -242,7 +247,7 @@ function BrandingSection() {
             style={[
               styles.colorSwatch,
               { backgroundColor: preset },
-              color.toLowerCase() === preset.toLowerCase() && styles.colorSwatchActive,
+              color.toLowerCase() === preset.toLowerCase() && { borderColor: colors.text },
             ]}
           />
         ))}
@@ -253,7 +258,7 @@ function BrandingSection() {
         onChangeText={setColor}
         autoCapitalize="none"
         placeholder="#2563eb"
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor={colors.placeholder}
       />
 
       <TouchableOpacity
@@ -295,6 +300,8 @@ function ChipRow<T extends string>({
   disabled?: boolean
 }) {
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   return (
     <View style={styles.chipRow}>
       {options.map((option) => {
@@ -323,6 +330,8 @@ function ChipRow<T extends string>({
 
 function BranchesSection() {
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const { data: branches, isLoading } = useManageBranches()
   const createBranch = useCreateBranch()
 
@@ -380,7 +389,7 @@ function BranchesSection() {
           <TextInput
             style={styles.input}
             placeholder="Ej. Norte"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={colors.placeholder}
             value={newBranch.name}
             onChangeText={(v) => setNewBranch((p) => ({ ...p, name: v }))}
           />
@@ -422,6 +431,8 @@ function BranchesSection() {
 }
 
 function BranchCard({ branch, palette }: { branch: BranchDetail; palette: BrandPalette }) {
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const updateBranch = useUpdateBranch()
   const [form, setForm] = useState({
     name: branch.name,
@@ -497,6 +508,8 @@ const ROLE_OPTIONS: { value: RoleName; label: string }[] = [
 
 function TeamSection() {
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const { data: members, isLoading } = useTeamMembers()
   const { data: branches } = useBranches()
   const inviteMember = useInviteTeamMember()
@@ -570,7 +583,7 @@ function TeamSection() {
             keyboardType="email-address"
             autoCapitalize="none"
             placeholder="correo@ejemplo.com"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={colors.placeholder}
             value={invite.email}
             onChangeText={(v) => setInvite((p) => ({ ...p, email: v }))}
           />
@@ -624,6 +637,8 @@ function TeamMemberCard({
   branches: { id: string; name: string }[]
   palette: BrandPalette
 }) {
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const updateMember = useUpdateTeamMember()
   const removeMember = useRemoveTeamMember()
 
@@ -743,6 +758,8 @@ function TeamMemberCard({
 
 function LabelsSection() {
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const labels = useLabels()
   const updateLabels = useUpdateLabels()
 
@@ -831,6 +848,8 @@ const POS_LAYOUT_OPTIONS: { value: PosLayout; label: string; hint: string }[] = 
 
 function PosLayoutSection() {
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const { data: posLayout, isLoading } = usePosLayout()
   const updatePosLayout = useUpdatePosLayout()
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
@@ -907,6 +926,8 @@ const MODULE_OPTIONS: { key: keyof BusinessModules; label: string; hint: string 
 
 function ModulesSection() {
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const { data: modules, isLoading } = useBusinessModules()
   const updateModules = useUpdateBusinessModules()
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
@@ -1032,6 +1053,8 @@ function presetRange(preset: string): { from?: Date; to?: Date } {
 
 function AuditLogSection() {
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const [preset, setPreset] = useState('today')
   const [actionFilter, setActionFilter] = useState<string>('')
   const range = presetRange(preset)
@@ -1099,283 +1122,266 @@ function AuditLogSection() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  tabBar: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    paddingVertical: 10,
-  },
-  tabBarContent: {
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  tabChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  tabChipActive: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
-  },
-  tabChipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#64748b',
-  },
-  tabChipTextActive: {
-    color: '#fff',
-  },
-  section: {
-    flex: 1,
-  },
-  sectionContent: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  loading: {
-    marginTop: 12,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 4,
-  },
-  cardSubtitle: {
-    fontSize: 12,
-    color: '#64748b',
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 12,
-    color: '#475569',
-    marginBottom: 6,
-    marginTop: 4,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#0f172a',
-    marginBottom: 10,
-  },
-  logoPicker: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#cbd5e1',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-  },
-  logoPreview: {
-    width: 56,
-    height: 56,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  logoImage: {
-    width: '100%',
-    height: '100%',
-  },
-  logoPlaceholder: {
-    fontSize: 10,
-    color: '#94a3b8',
-  },
-  logoPickerText: {
-    flex: 1,
-  },
-  logoPickerTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1e293b',
-  },
-  colorGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 10,
-  },
-  colorSwatch: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  colorSwatchActive: {
-    borderColor: '#0f172a',
-  },
-  saveButton: {
-    backgroundColor: '#2563eb',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  secondaryButtonText: {
-    color: '#334155',
-    fontWeight: '600',
-    fontSize: 13,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  textSuccess: {
-    color: '#16a34a',
-    fontSize: 13,
-    marginTop: 8,
-  },
-  textDanger: {
-    color: '#dc2626',
-    fontSize: 13,
-    marginTop: 8,
-  },
-  emptyText: {
-    fontSize: 13,
-    color: '#94a3b8',
-    paddingVertical: 8,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 14,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  dashedCard: {
-    borderStyle: 'dashed',
-  },
-  optionCardActive: {
-    borderColor: '#2563eb',
-    backgroundColor: '#dbeafe',
-  },
-  cardTopInfo: {
-    flex: 1,
-    marginRight: 8,
-  },
-  cardName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 4,
-  },
-  cardCaption: {
-    fontSize: 12,
-    color: '#94a3b8',
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 10,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  chipActive: {
-    backgroundColor: '#dbeafe',
-    borderColor: '#2563eb',
-  },
-  chipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748b',
-  },
-  chipTextActive: {
-    color: '#1d4ed8',
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  permissionsBlock: {
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-    marginTop: 4,
-    paddingTop: 10,
-  },
-  permissionLabel: {
-    flex: 1,
-    fontSize: 12,
-    color: '#475569',
-    marginRight: 8,
-  },
-  rowButtons: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 4,
-  },
-  rowButtonFlex: {
-    flex: 1,
-    marginTop: 0,
-  },
-  dangerButton: {
-    borderWidth: 1,
-    borderColor: '#dc2626',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  dangerButtonText: {
-    color: '#dc2626',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  auditTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 2,
-  },
-  auditDetails: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginTop: 4,
-  },
-})
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    tabBar: {
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      paddingVertical: 10,
+    },
+    tabBarContent: {
+      paddingHorizontal: 16,
+      gap: 8,
+    },
+    tabChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+      borderRadius: 10,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    tabChipText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textSecondary,
+    },
+    tabChipTextActive: {
+      color: '#fff',
+    },
+    section: {
+      flex: 1,
+    },
+    sectionContent: {
+      padding: 16,
+      paddingBottom: 32,
+    },
+    loading: {
+      marginTop: 12,
+    },
+    cardTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 4,
+    },
+    cardSubtitle: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginBottom: 16,
+    },
+    label: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginBottom: 6,
+      marginTop: 4,
+    },
+    input: {
+      backgroundColor: colors.surfaceAlt,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 14,
+      color: colors.text,
+      marginBottom: 10,
+    },
+    logoPicker: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: colors.border,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 16,
+    },
+    logoPreview: {
+      width: 56,
+      height: 56,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+    },
+    logoImage: {
+      width: '100%',
+      height: '100%',
+    },
+    logoPlaceholder: {
+      fontSize: 10,
+      color: colors.textMuted,
+    },
+    logoPickerText: {
+      flex: 1,
+    },
+    logoPickerTitle: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    colorGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 10,
+      marginBottom: 10,
+    },
+    colorSwatch: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      borderWidth: 2,
+      borderColor: 'transparent',
+    },
+    saveButton: {
+      borderRadius: 10,
+      paddingVertical: 12,
+      alignItems: 'center',
+      marginTop: 4,
+    },
+    saveButtonText: {
+      color: '#fff',
+      fontWeight: '700',
+      fontSize: 14,
+    },
+    secondaryButton: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingVertical: 12,
+      alignItems: 'center',
+      marginTop: 8,
+    },
+    secondaryButtonText: {
+      color: colors.textSecondary,
+      fontWeight: '600',
+      fontSize: 13,
+    },
+    disabled: {
+      opacity: 0.5,
+    },
+    textSuccess: {
+      color: colors.success,
+      fontSize: 13,
+      marginTop: 8,
+    },
+    textDanger: {
+      color: colors.danger,
+      fontSize: 13,
+      marginTop: 8,
+    },
+    emptyText: {
+      fontSize: 13,
+      color: colors.textMuted,
+      paddingVertical: 8,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 14,
+      marginBottom: 10,
+      shadowColor: '#000',
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 1,
+    },
+    dashedCard: {
+      borderStyle: 'dashed',
+    },
+    cardTopInfo: {
+      flex: 1,
+      marginRight: 8,
+    },
+    cardName: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 4,
+    },
+    cardCaption: {
+      fontSize: 12,
+      color: colors.textMuted,
+    },
+    chipRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 10,
+    },
+    chip: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    chipText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textSecondary,
+    },
+    switchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 10,
+    },
+    permissionsBlock: {
+      borderTopWidth: 1,
+      borderTopColor: colors.divider,
+      marginTop: 4,
+      paddingTop: 10,
+    },
+    permissionLabel: {
+      flex: 1,
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginRight: 8,
+    },
+    rowButtons: {
+      flexDirection: 'row',
+      gap: 8,
+      marginTop: 4,
+    },
+    rowButtonFlex: {
+      flex: 1,
+      marginTop: 0,
+    },
+    dangerButton: {
+      borderWidth: 1,
+      borderColor: colors.danger,
+      borderRadius: 10,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      alignItems: 'center',
+    },
+    dangerButtonText: {
+      color: colors.danger,
+      fontWeight: '700',
+      fontSize: 13,
+    },
+    auditTopRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 2,
+    },
+    auditDetails: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 4,
+    },
+  })
+}
