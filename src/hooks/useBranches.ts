@@ -1,27 +1,44 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth/AuthContext'
 import type { Branch } from '../types'
 
+const BRANCHES_CACHE_KEY = 'rb-suite-branches-cache'
+
 // RLS ya limita esto a las sucursales del negocio actual (y, si el usuario
 // tiene branch_id fijo, a esa única sucursal vía current_branch_ids()).
+//
+// Se cachea la última lista exitosa en AsyncStorage (mismo patrón que
+// usePosCatalog): sin esto, un arranque en frío en modo avión — antes de
+// elegir sucursal — dejaba el selector vacío para siempre, porque
+// activeBranchId nunca persiste entre sesiones y esta era la única fuente
+// para llenarlo (bug reportado: "no me deja ver el punto de venta").
 export function useBranches() {
   return useQuery({
     queryKey: ['branches'],
     queryFn: async (): Promise<Branch[]> => {
-      const { data, error } = await supabase
-        .from('branches')
-        .select('id, business_id, name')
-        .eq('active', true)
-        .order('name')
+      try {
+        const { data, error } = await supabase
+          .from('branches')
+          .select('id, business_id, name')
+          .eq('active', true)
+          .order('name')
 
-      if (error) throw error
+        if (error) throw error
 
-      return (data ?? []).map((row) => ({
-        id: row.id,
-        businessId: row.business_id,
-        name: row.name,
-      }))
+        const branches = (data ?? []).map((row) => ({
+          id: row.id,
+          businessId: row.business_id,
+          name: row.name,
+        }))
+        await AsyncStorage.setItem(BRANCHES_CACHE_KEY, JSON.stringify(branches))
+        return branches
+      } catch (error) {
+        const cached = await AsyncStorage.getItem(BRANCHES_CACHE_KEY)
+        if (cached) return JSON.parse(cached) as Branch[]
+        throw error
+      }
     },
   })
 }

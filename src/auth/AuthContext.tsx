@@ -1,7 +1,11 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '../lib/supabase'
 import type { Membership } from '../types'
+
+const MEMBERSHIP_CACHE_KEY = 'rb-suite-membership-cache'
+const ACTIVE_BRANCH_CACHE_KEY = 'rb-suite-active-branch-cache'
 
 interface AuthContextValue {
   session: Session | null
@@ -44,23 +48,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // lado del servidor con esta función, nunca se recibe desde el cliente
     // — misma función que usa la web (get_my_membership(), en las
     // migraciones de Supabase).
-    supabase.rpc('get_my_membership').then(({ data, error }) => {
-      if (error) {
-        console.error('No se pudo cargar la membresía del usuario', error)
-        return
+    //
+    // Se cachea en AsyncStorage: sin esto, un arranque en frío sin señal
+    // dejaba `membership` en null para siempre (sin catch ni respaldo), lo
+    // que rompía la app entera, no solo el selector de sucursal.
+    async function resolveMembership() {
+      async function applyResolved(resolved: Membership) {
+        setMembership(resolved)
+        if (resolved.branchId) {
+          setActiveBranchId(resolved.branchId)
+        } else {
+          // Administrador/Gerente: no tienen sucursal fija, así que se
+          // restaura la última que eligieron (persistida abajo) en vez de
+          // forzar el selector de nuevo en cada apertura de la app.
+          const cachedBranch = await AsyncStorage.getItem(ACTIVE_BRANCH_CACHE_KEY)
+          if (cachedBranch) setActiveBranchId(cachedBranch)
+        }
       }
-      const row = Array.isArray(data) ? data[0] : data
-      if (row) {
+
+      try {
+        const { data, error } = await supabase.rpc('get_my_membership')
+        if (error) throw error
+        const row = Array.isArray(data) ? data[0] : data
+        if (!row) return
+
         const resolved: Membership = {
           businessId: row.business_id,
           branchId: row.branch_id,
           role: row.role,
           permissionOverrides: row.permission_overrides ?? {},
         }
-        setMembership(resolved)
-        setActiveBranchId(resolved.branchId)
+        await AsyncStorage.setItem(MEMBERSHIP_CACHE_KEY, JSON.stringify(resolved))
+        await applyResolved(resolved)
+      } catch (error) {
+        console.error('No se pudo cargar la membresía del usuario', error)
+        const cached = await AsyncStorage.getItem(MEMBERSHIP_CACHE_KEY)
+        if (!cached) return
+        await applyResolved(JSON.parse(cached) as Membership)
       }
-    })
+    }
+
+    resolveMembership()
     // Igual que en la web: se resuelve por session?.user?.id (estable
     // entre refrescos de token) y no por el objeto `session` completo,
     // que Supabase reemplaza en cada evento de onAuthStateChange.
@@ -69,11 +97,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signOut() {
     await supabase.auth.signOut()
+    await AsyncStorage.multiRemove([MEMBERSHIP_CACHE_KEY, ACTIVE_BRANCH_CACHE_KEY])
+  }
+
+  function updateActiveBranchId(branchId: string | null) {
+    setActiveBranchId(branchId)
+    if (branchId) {
+      AsyncStorage.setItem(ACTIVE_BRANCH_CACHE_KEY, branchId).catch(() => {})
+    } else {
+      AsyncStorage.removeItem(ACTIVE_BRANCH_CACHE_KEY).catch(() => {})
+    }
   }
 
   return (
     <AuthContext.Provider
-      value={{ session, membership, loading, activeBranchId, setActiveBranchId, signOut }}
+      value={{
+        session,
+        membership,
+        loading,
+        activeBranchId,
+        setActiveBranchId: updateActiveBranchId,
+        signOut,
+      }}
     >
       {children}
     </AuthContext.Provider>

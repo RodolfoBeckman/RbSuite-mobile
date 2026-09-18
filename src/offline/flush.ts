@@ -69,7 +69,7 @@ function invalidateForAction(item: QueueAction, queryClient: QueryClient) {
 // de caja de la que depende. Un fallo de red detiene todo (se reintenta
 // después); un rechazo real del servidor solo descarta esa acción y sigue
 // con las demás.
-export async function flushQueue(queryClient: QueryClient): Promise<void> {
+async function runFlush(queryClient: QueryClient): Promise<void> {
   const queue = await loadQueue()
 
   for (const item of queue) {
@@ -92,4 +92,24 @@ export async function flushQueue(queryClient: QueryClient): Promise<void> {
   }
 
   queryClient.invalidateQueries({ queryKey: ['offline-queue'] })
+}
+
+// useOfflineSyncTriggers dispara flushQueue() desde tres eventos distintos
+// (montar, NetInfo, AppState) que pueden llegar casi al mismo tiempo al
+// reconectar — sin este guard, dos llamadas concurrentes cargaban la
+// misma cola ANTES de que la primera alcanzara a quitar el item ya
+// sincronizado, y reintentaban la misma acción por partida doble/triple
+// (bug reportado: una venta de 1 producto descontó 3 al salir de modo
+// avión). Una sola bandera en memoria basta — todo corre en un solo hilo
+// de JS, así que "concurrente" aquí solo significa llamadas entrelazadas,
+// no llamadas simultáneas de verdad.
+let inFlight: Promise<void> | null = null
+
+export function flushQueue(queryClient: QueryClient): Promise<void> {
+  if (!inFlight) {
+    inFlight = runFlush(queryClient).finally(() => {
+      inFlight = null
+    })
+  }
+  return inFlight
 }
