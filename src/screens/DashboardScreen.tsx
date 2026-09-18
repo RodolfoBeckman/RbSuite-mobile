@@ -11,6 +11,7 @@ import {
   useTopItems,
 } from '../hooks/useDashboard'
 import { useBrandPalette } from '../theme/useBrandPalette'
+import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
 import type { MainTabParamList } from '../../App'
 import type { DashboardSummary } from '../types'
 
@@ -33,6 +34,8 @@ function paymentColor(method: string, brand: string, brandLight: string): string
 }
 
 function TrendArea({ data, brand }: { data: { day: string; total: number }[]; brand: string }) {
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const width = 300
   const height = 120
   const padding = 8
@@ -97,6 +100,8 @@ function PaymentDonut({
   brand: string
   brandLight: string
 }) {
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const total = data.reduce((sum, d) => sum + d.total, 0)
   const radius = 42
   const circumference = 2 * Math.PI * radius
@@ -106,7 +111,7 @@ function PaymentDonut({
     <View style={styles.donutRow}>
       <View style={styles.donutChart}>
         <Svg width={128} height={128} viewBox="0 0 100 100" style={styles.donutSvg}>
-          <Circle cx={50} cy={50} r={radius} fill="none" stroke="#e2e8f0" strokeWidth={14} />
+          <Circle cx={50} cy={50} r={radius} fill="none" stroke={colors.border} strokeWidth={14} />
           {total > 0 &&
             data.map((d) => {
               const fraction = d.total / total
@@ -163,6 +168,8 @@ function SummaryCard({
   tone?: 'brand' | 'danger'
   brandDark: string
 }) {
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   return (
     <View style={styles.summaryCard}>
       <Text style={styles.summaryLabel}>{label}</Text>
@@ -183,6 +190,8 @@ type Props = BottomTabScreenProps<MainTabParamList, 'Dashboard'>
 export default function DashboardScreen({ navigation }: Props) {
   const { membership } = useAuth()
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const { data: summary, isLoading: loadingSummary } = useDashboardSummary()
 
   if (!membership) {
@@ -218,6 +227,8 @@ function VendorDashboard({
   navigation: Props['navigation']
   palette: { primary: string; dark: string; light: string }
 }) {
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <SummaryCard
@@ -252,6 +263,8 @@ function ManagerDashboard({
   loadingSummary: boolean
   palette: { primary: string; dark: string; light: string }
 }) {
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const { data: byBranch } = useSalesByBranch()
   const { data: trend } = useSalesTrend(7)
   const { data: paymentMethods } = usePaymentMethodTotals(7)
@@ -357,194 +370,194 @@ function ManagerDashboard({
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  loading: {
-    marginTop: 32,
-  },
-  scrollContent: {
-    padding: 16,
-    gap: 12,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  summaryCard: {
-    flexGrow: 1,
-    flexBasis: '30%',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 14,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  summaryLabel: {
-    fontSize: 12,
-    color: '#64748b',
-    marginBottom: 4,
-  },
-  summaryValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1d4ed8',
-  },
-  posBanner: {
-    borderRadius: 14,
-    paddingVertical: 32,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-  posBannerText: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1d4ed8',
-    marginBottom: 10,
-  },
-  emptyText: {
-    fontSize: 13,
-    color: '#94a3b8',
-  },
-  trendLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 4,
-  },
-  trendLabel: {
-    fontSize: 11,
-    color: '#94a3b8',
-  },
-  donutRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 20,
-  },
-  donutChart: {
-    width: 128,
-    height: 128,
-  },
-  donutSvg: {
-    transform: [{ rotate: '-90deg' }],
-  },
-  donutCenter: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  donutCenterLabel: {
-    fontSize: 9,
-    color: '#94a3b8',
-    textTransform: 'uppercase',
-  },
-  donutCenterValue: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#334155',
-  },
-  donutLegend: {
-    gap: 6,
-  },
-  donutLegendRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  donutDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  donutLegendLabel: {
-    width: 100,
-    fontSize: 13,
-    color: '#64748b',
-  },
-  donutLegendValue: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#334155',
-  },
-  branchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  branchName: {
-    width: 72,
-    fontSize: 12,
-    color: '#64748b',
-  },
-  branchBarTrack: {
-    flex: 1,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#e2e8f0',
-  },
-  branchBarFill: {
-    height: 8,
-    borderRadius: 4,
-  },
-  branchTotal: {
-    width: 76,
-    fontSize: 12,
-    textAlign: 'right',
-    color: '#334155',
-  },
-  topItemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 5,
-  },
-  topItemName: {
-    flex: 1,
-    marginRight: 8,
-    fontSize: 13,
-    color: '#334155',
-  },
-  topItemValue: {
-    fontSize: 13,
-    color: '#94a3b8',
-  },
-  lowStockCard: {
-    borderColor: '#fecaca',
-  },
-  textDanger: {
-    color: '#dc2626',
-  },
-})
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    loading: {
+      marginTop: 32,
+    },
+    scrollContent: {
+      padding: 16,
+      gap: 12,
+    },
+    summaryRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 12,
+    },
+    summaryCard: {
+      flexGrow: 1,
+      flexBasis: '30%',
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 14,
+      shadowColor: '#000',
+      shadowOpacity: 0.05,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 1,
+    },
+    summaryLabel: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginBottom: 4,
+    },
+    summaryValue: {
+      fontSize: 18,
+      fontWeight: '700',
+    },
+    posBanner: {
+      borderRadius: 14,
+      paddingVertical: 32,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOpacity: 0.18,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 3,
+    },
+    posBannerText: {
+      color: '#fff',
+      fontSize: 17,
+      fontWeight: '700',
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 16,
+      shadowColor: '#000',
+      shadowOpacity: 0.05,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 1,
+    },
+    cardTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+      marginBottom: 10,
+    },
+    emptyText: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    trendLabels: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 4,
+    },
+    trendLabel: {
+      fontSize: 11,
+      color: colors.textMuted,
+    },
+    donutRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: 20,
+    },
+    donutChart: {
+      width: 128,
+      height: 128,
+    },
+    donutSvg: {
+      transform: [{ rotate: '-90deg' }],
+    },
+    donutCenter: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    donutCenterLabel: {
+      fontSize: 9,
+      color: colors.textMuted,
+      textTransform: 'uppercase',
+    },
+    donutCenterValue: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: colors.textSecondary,
+    },
+    donutLegend: {
+      gap: 6,
+    },
+    donutLegendRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    donutDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+    },
+    donutLegendLabel: {
+      width: 100,
+      fontSize: 13,
+      color: colors.textSecondary,
+    },
+    donutLegendValue: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textSecondary,
+    },
+    branchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 8,
+    },
+    branchName: {
+      width: 72,
+      fontSize: 12,
+      color: colors.textSecondary,
+    },
+    branchBarTrack: {
+      flex: 1,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.border,
+    },
+    branchBarFill: {
+      height: 8,
+      borderRadius: 4,
+    },
+    branchTotal: {
+      width: 76,
+      fontSize: 12,
+      textAlign: 'right',
+      color: colors.textSecondary,
+    },
+    topItemRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 5,
+    },
+    topItemName: {
+      flex: 1,
+      marginRight: 8,
+      fontSize: 13,
+      color: colors.textSecondary,
+    },
+    topItemValue: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    lowStockCard: {
+      borderColor: colors.danger,
+    },
+    textDanger: {
+      color: colors.danger,
+    },
+  })
+}
