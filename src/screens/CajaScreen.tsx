@@ -21,6 +21,7 @@ import {
   useRegisterCashMovement,
 } from '../hooks/useCaja'
 import { useBrandPalette } from '../theme/useBrandPalette'
+import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
 import type { CashMovementType } from '../types'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
@@ -35,6 +36,8 @@ const MOVEMENT_LABEL: Record<string, string> = {
 export default function CajaScreen() {
   const activeBranchId = useActiveBranch()
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const { data: registers, isLoading: loadingRegisters } = useCashRegisters(activeBranchId)
   const createRegister = useCreateCashRegister()
 
@@ -153,7 +156,7 @@ export default function CajaScreen() {
               onChangeText={setOpeningAmount}
               keyboardType="decimal-pad"
               placeholder="0.00"
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor={colors.placeholder}
               style={styles.input}
             />
 
@@ -269,14 +272,14 @@ export default function CajaScreen() {
             onChangeText={setMovementAmount}
             keyboardType="decimal-pad"
             placeholder="Monto"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={colors.placeholder}
             style={styles.input}
           />
           <TextInput
             value={movementReason}
             onChangeText={setMovementReason}
             placeholder="Motivo (opcional)"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={colors.placeholder}
             style={styles.input}
           />
 
@@ -314,7 +317,7 @@ export default function CajaScreen() {
             }}
           >
             {registerMovement.isPending ? (
-              <ActivityIndicator color="#334155" />
+              <ActivityIndicator color={colors.textSecondary} />
             ) : (
               <Text style={styles.secondaryButtonText}>Registrar movimiento</Text>
             )}
@@ -340,7 +343,7 @@ export default function CajaScreen() {
             onChangeText={setCountedAmount}
             keyboardType="decimal-pad"
             placeholder="0.00"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={colors.placeholder}
             style={styles.input}
           />
 
@@ -424,179 +427,174 @@ export default function CajaScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  scrollContent: {
-    padding: 16,
-    gap: 16,
-  },
-  loading: {
-    marginTop: 32,
-  },
-  standaloneWrap: {
-    padding: 16,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 13,
-    color: '#64748b',
-    marginBottom: 12,
-  },
-  label: {
-    fontSize: 13,
-    color: '#475569',
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#0f172a',
-    marginBottom: 10,
-  },
-  infoBox: {
-    backgroundColor: '#dbeafe',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 14,
-  },
-  infoBoxText: {
-    fontSize: 13,
-    color: '#1d4ed8',
-  },
-  totalBox: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#dbeafe',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 16,
-  },
-  totalBoxLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1d4ed8',
-  },
-  totalBoxValue: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1d4ed8',
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#334155',
-    marginBottom: 8,
-  },
-  movementsTitle: {
-    marginTop: 20,
-  },
-  segmentRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 10,
-  },
-  segmentButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    paddingVertical: 8,
-    alignItems: 'center',
-  },
-  segmentButtonSuccess: {
-    borderColor: '#16a34a',
-  },
-  segmentButtonDanger: {
-    borderColor: '#dc2626',
-  },
-  segmentButtonText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#64748b',
-  },
-  primaryButton: {
-    backgroundColor: '#2563eb',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: '#334155',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  darkButton: {
-    backgroundColor: '#1d4ed8',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  feedback: {
-    marginTop: 10,
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  textSuccess: {
-    color: '#16a34a',
-  },
-  textDanger: {
-    color: '#dc2626',
-  },
-  movementRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  movementLabel: {
-    fontSize: 13,
-    color: '#475569',
-  },
-  emptyText: {
-    fontSize: 13,
-    color: '#94a3b8',
-  },
-})
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollContent: {
+      padding: 16,
+      gap: 16,
+    },
+    loading: {
+      marginTop: 32,
+    },
+    standaloneWrap: {
+      padding: 16,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 16,
+      shadowColor: '#000',
+      shadowOpacity: 0.05,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 1,
+    },
+    cardTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 4,
+    },
+    subtitle: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginBottom: 12,
+    },
+    label: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginBottom: 6,
+    },
+    input: {
+      backgroundColor: colors.surfaceAlt,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 14,
+      color: colors.text,
+      marginBottom: 10,
+    },
+    infoBox: {
+      borderRadius: 10,
+      padding: 12,
+      marginBottom: 14,
+    },
+    infoBoxText: {
+      fontSize: 13,
+    },
+    totalBox: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderRadius: 10,
+      padding: 12,
+      marginBottom: 16,
+    },
+    totalBoxLabel: {
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    totalBoxValue: {
+      fontSize: 17,
+      fontWeight: '700',
+    },
+    sectionTitle: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: colors.textSecondary,
+      marginBottom: 8,
+    },
+    movementsTitle: {
+      marginTop: 20,
+    },
+    segmentRow: {
+      flexDirection: 'row',
+      gap: 8,
+      marginBottom: 10,
+    },
+    segmentButton: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingVertical: 8,
+      alignItems: 'center',
+    },
+    segmentButtonSuccess: {
+      borderColor: colors.success,
+    },
+    segmentButtonDanger: {
+      borderColor: colors.danger,
+    },
+    segmentButtonText: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.textSecondary,
+    },
+    primaryButton: {
+      borderRadius: 10,
+      paddingVertical: 12,
+      alignItems: 'center',
+    },
+    primaryButtonText: {
+      color: '#fff',
+      fontWeight: '700',
+      fontSize: 14,
+    },
+    secondaryButton: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingVertical: 12,
+      alignItems: 'center',
+    },
+    secondaryButtonText: {
+      color: colors.textSecondary,
+      fontWeight: '700',
+      fontSize: 14,
+    },
+    darkButton: {
+      borderRadius: 10,
+      paddingVertical: 12,
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    buttonDisabled: {
+      opacity: 0.5,
+    },
+    feedback: {
+      marginTop: 10,
+      fontSize: 13,
+      textAlign: 'center',
+    },
+    textSuccess: {
+      color: colors.success,
+    },
+    textDanger: {
+      color: colors.danger,
+    },
+    movementRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 6,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    },
+    movementLabel: {
+      fontSize: 13,
+      color: colors.textSecondary,
+    },
+    emptyText: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+  })
+}
