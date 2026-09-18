@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import type { CatalogItem } from '../../types'
 import type { BrandPalette } from '../../theme/useBrandPalette'
+import { useThemeColors, type ThemeColors } from '../../theme/useThemeColors'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
 
@@ -17,6 +18,8 @@ export default function DepartmentList({
   onAdd: (item: CatalogItem) => void
   palette: BrandPalette
 }) {
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const sections = useMemo(() => {
     const byDept = new Map<string, CatalogItem[]>()
     for (const item of items) {
@@ -67,52 +70,51 @@ export default function DepartmentList({
   )
 }
 
-const styles = StyleSheet.create({
-  list: {
-    paddingHorizontal: 12,
-    paddingBottom: 90,
-  },
-  sectionHeader: {
-    backgroundColor: '#f1f5f9',
-    color: '#475569',
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    marginTop: 4,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-  },
-  rowDisabled: {
-    opacity: 0.4,
-  },
-  rowName: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0f172a',
-  },
-  rowStock: {
-    fontSize: 11,
-    color: '#94a3b8',
-    marginRight: 10,
-  },
-  rowPrice: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1d4ed8',
-  },
-  emptyText: {
-    color: '#94a3b8',
-    textAlign: 'center',
-    marginTop: 24,
-  },
-})
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    list: {
+      paddingHorizontal: 12,
+      paddingBottom: 90,
+    },
+    sectionHeader: {
+      fontSize: 11,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      paddingHorizontal: 8,
+      paddingVertical: 6,
+      marginTop: 4,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+      paddingVertical: 10,
+      paddingHorizontal: 8,
+    },
+    rowDisabled: {
+      opacity: 0.4,
+    },
+    rowName: {
+      flex: 1,
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    rowStock: {
+      fontSize: 11,
+      color: colors.textMuted,
+      marginRight: 10,
+    },
+    rowPrice: {
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    emptyText: {
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginTop: 24,
+    },
+  })
+}

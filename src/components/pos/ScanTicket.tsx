@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import type { CatalogItem } from '../../types'
 import type { BrandPalette } from '../../theme/useBrandPalette'
+import { useThemeColors, type ThemeColors } from '../../theme/useThemeColors'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
 
@@ -25,6 +26,8 @@ export default function ScanTicket({
   total: number
   palette: BrandPalette
 }) {
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const inputRef = useRef<TextInput>(null)
 
   function handleAdd(item: CatalogItem) {
@@ -52,7 +55,7 @@ export default function ScanTicket({
         returnKeyType="done"
         autoFocus
         placeholder="Escanea o escribe un código/nombre…"
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor={colors.placeholder}
         style={styles.input}
       />
 
@@ -91,73 +94,71 @@ export default function ScanTicket({
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#0f172a',
-  },
-  totalBox: {
-    backgroundColor: '#dbeafe',
-    borderRadius: 16,
-    alignItems: 'center',
-    paddingVertical: 22,
-    marginTop: 16,
-  },
-  totalLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#3b82f6',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  totalValue: {
-    fontSize: 40,
-    fontWeight: '800',
-    color: '#1d4ed8',
-    marginTop: 4,
-  },
-  matches: {
-    marginTop: 16,
-  },
-  matchRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 8,
-  },
-  matchRowDisabled: {
-    opacity: 0.4,
-  },
-  matchName: {
-    flex: 1,
-    fontSize: 14,
-    color: '#0f172a',
-    marginRight: 8,
-  },
-  matchPrice: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1d4ed8',
-  },
-  emptyText: {
-    color: '#94a3b8',
-    textAlign: 'center',
-    marginTop: 12,
-  },
-})
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      paddingHorizontal: 16,
+    },
+    input: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      fontSize: 16,
+      color: colors.text,
+    },
+    totalBox: {
+      borderRadius: 16,
+      alignItems: 'center',
+      paddingVertical: 22,
+      marginTop: 16,
+    },
+    totalLabel: {
+      fontSize: 11,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    totalValue: {
+      fontSize: 40,
+      fontWeight: '800',
+      marginTop: 4,
+    },
+    matches: {
+      marginTop: 16,
+    },
+    matchRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      marginBottom: 8,
+    },
+    matchRowDisabled: {
+      opacity: 0.4,
+    },
+    matchName: {
+      flex: 1,
+      fontSize: 14,
+      color: colors.text,
+      marginRight: 8,
+    },
+    matchPrice: {
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    emptyText: {
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginTop: 12,
+    },
+  })
+}

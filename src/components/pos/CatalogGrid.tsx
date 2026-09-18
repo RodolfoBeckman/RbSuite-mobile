@@ -1,6 +1,7 @@
 import { FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native'
 import type { CatalogItem } from '../../types'
 import type { BrandPalette } from '../../theme/useBrandPalette'
+import { useThemeColors, type ThemeColors } from '../../theme/useThemeColors'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
 
@@ -17,6 +18,8 @@ export default function CatalogGrid({
   onAdd: (item: CatalogItem) => void
   palette: BrandPalette
 }) {
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   return (
     <FlatList
       data={items}
@@ -50,51 +53,52 @@ export default function CatalogGrid({
   )
 }
 
-const styles = StyleSheet.create({
-  list: {
-    paddingHorizontal: 12,
-    paddingBottom: 90,
-  },
-  row: {
-    gap: 10,
-  },
-  emptyText: {
-    color: '#94a3b8',
-    textAlign: 'center',
-    marginTop: 24,
-  },
-  card: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 12,
-    marginBottom: 10,
-    minHeight: 88,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  cardDisabled: {
-    opacity: 0.4,
-  },
-  cardName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0f172a',
-    marginBottom: 6,
-  },
-  cardPrice: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1d4ed8',
-  },
-  cardStock: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginTop: 4,
-  },
-})
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    list: {
+      paddingHorizontal: 12,
+      paddingBottom: 90,
+    },
+    row: {
+      gap: 10,
+    },
+    emptyText: {
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginTop: 24,
+    },
+    card: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 12,
+      marginBottom: 10,
+      minHeight: 88,
+      shadowColor: '#000',
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 1,
+    },
+    cardDisabled: {
+      opacity: 0.4,
+    },
+    cardName: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 6,
+    },
+    cardPrice: {
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    cardStock: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 4,
+    },
+  })
+}
