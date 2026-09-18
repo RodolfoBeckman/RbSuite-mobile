@@ -11,7 +11,9 @@ import {
 } from 'react-native'
 import { useAuth } from '../auth/AuthContext'
 import { hasPermission } from '../auth/permissions'
+import { fetchSaleReceipt } from '../hooks/useSaleReceipt'
 import { useCancelSale, useSalesHistory } from '../hooks/useSales'
+import { printReceipt } from '../printing/printReceipt'
 import { useBrandPalette } from '../theme/useBrandPalette'
 import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
 import type { Sale } from '../types'
@@ -36,6 +38,23 @@ export default function SalesHistoryScreen() {
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null,
   )
+  const [printingId, setPrintingId] = useState<string | null>(null)
+
+  async function handlePrint(saleId: string) {
+    setPrintingId(saleId)
+    setFeedback(null)
+    try {
+      const receipt = await fetchSaleReceipt(saleId)
+      await printReceipt(receipt)
+    } catch (error) {
+      setFeedback({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'No se pudo imprimir el ticket',
+      })
+    } finally {
+      setPrintingId(null)
+    }
+  }
 
   function handleCancel(saleId: string, folio: number) {
     Alert.alert(
@@ -97,6 +116,16 @@ export default function SalesHistoryScreen() {
               <Text style={[styles.rowTotal, { color: palette.dark }]}>
                 {currency.format(sale.total)}
               </Text>
+              <TouchableOpacity
+                style={[styles.reprintButton, printingId === sale.id && styles.disabled]}
+                activeOpacity={0.7}
+                disabled={printingId === sale.id}
+                onPress={() => handlePrint(sale.id)}
+              >
+                <Text style={styles.reprintButtonText}>
+                  {printingId === sale.id ? 'Imprimiendo…' : 'Reimprimir'}
+                </Text>
+              </TouchableOpacity>
               {sale.status === 'cancelled' ? (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>Cancelada</Text>
@@ -202,6 +231,18 @@ function createStyles(colors: ThemeColors) {
       fontSize: 12,
       fontWeight: '700',
       color: colors.danger,
+    },
+    reprintButton: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    reprintButtonText: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.textSecondary,
     },
     disabled: {
       opacity: 0.5,

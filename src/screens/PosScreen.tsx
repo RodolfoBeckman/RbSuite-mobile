@@ -20,6 +20,8 @@ import { usePosCatalog } from '../hooks/usePosCatalog'
 import { usePosLayout } from '../hooks/usePosLayout'
 import { useCreateSale } from '../hooks/useCreateSale'
 import { useLabels } from '../hooks/useLabels'
+import { fetchSaleReceipt } from '../hooks/useSaleReceipt'
+import { printReceipt } from '../printing/printReceipt'
 import { useBrandPalette } from '../theme/useBrandPalette'
 import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
 import PendingSyncBanner from '../offline/PendingSyncBanner'
@@ -54,6 +56,8 @@ export default function PosScreen() {
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null,
   )
+  const [lastSaleId, setLastSaleId] = useState<string | null>(null)
+  const [printing, setPrinting] = useState(false)
 
   const createSale = useCreateSale()
 
@@ -95,7 +99,7 @@ export default function PosScreen() {
     createSale.mutate(
       { branchId: activeBranchId, cartLines, paymentMethod, total },
       {
-        onSuccess: ({ folio, queued }) => {
+        onSuccess: ({ saleId, folio, queued }) => {
           setFeedback({
             type: 'success',
             text: queued
@@ -104,6 +108,11 @@ export default function PosScreen() {
                 ? `Venta registrada — folio ${folio}`
                 : 'Venta registrada',
           })
+          // Una venta encolada offline no tiene folio todavía y sus datos
+          // (negocio/sucursal) tampoco están garantizados sin conexión —
+          // el ticket solo se puede imprimir de inmediato si sí se
+          // registró en el servidor.
+          setLastSaleId(queued ? null : saleId)
           setCart(new Map())
           setTimeout(() => {
             setCartOpen(false)
@@ -118,6 +127,22 @@ export default function PosScreen() {
         },
       },
     )
+  }
+
+  async function handlePrint() {
+    if (!lastSaleId) return
+    setPrinting(true)
+    try {
+      const receipt = await fetchSaleReceipt(lastSaleId)
+      await printReceipt(receipt)
+    } catch (error) {
+      setFeedback({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'No se pudo imprimir el ticket',
+      })
+    } finally {
+      setPrinting(false)
+    }
   }
 
   if (!activeBranchId) {
@@ -250,14 +275,29 @@ export default function PosScreen() {
             </View>
 
             {feedback && (
-              <Text
-                style={[
-                  styles.feedback,
-                  feedback.type === 'success' ? styles.feedbackSuccess : styles.feedbackError,
-                ]}
-              >
-                {feedback.text}
-              </Text>
+              <View style={styles.feedbackBlock}>
+                <Text
+                  style={[
+                    styles.feedback,
+                    feedback.type === 'success' ? styles.feedbackSuccess : styles.feedbackError,
+                  ]}
+                >
+                  {feedback.text}
+                </Text>
+                {lastSaleId && (
+                  <TouchableOpacity onPress={handlePrint} disabled={printing}>
+                    <Text
+                      style={[
+                        styles.printLink,
+                        { color: palette.dark },
+                        printing && styles.printLinkDisabled,
+                      ]}
+                    >
+                      {printing ? 'Imprimiendo…' : 'Imprimir ticket'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             )}
 
             <TouchableOpacity
@@ -468,8 +508,11 @@ function createStyles(colors: ThemeColors) {
       fontWeight: '600',
       color: colors.textSecondary,
     },
-    feedback: {
+    feedbackBlock: {
       marginTop: 12,
+      alignItems: 'center',
+    },
+    feedback: {
       fontSize: 13,
       textAlign: 'center',
     },
@@ -478,6 +521,16 @@ function createStyles(colors: ThemeColors) {
     },
     feedbackError: {
       color: colors.danger,
+    },
+    printLink: {
+      marginTop: 6,
+      fontSize: 13,
+      fontWeight: '700',
+      color: colors.text,
+      textDecorationLine: 'underline',
+    },
+    printLinkDisabled: {
+      opacity: 0.5,
     },
     checkoutButton: {
       marginTop: 14,

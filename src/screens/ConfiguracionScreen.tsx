@@ -14,6 +14,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
+import { usePrintersDiscovery, type DeviceInfo } from 'react-native-esc-pos-printer'
+import { printTestTicket } from '../printing/printReceipt'
+import {
+  clearPairedPrinter,
+  getPairedPrinter,
+  setPairedPrinter,
+  type PairedPrinter,
+} from '../printing/printerStorage'
 import { useAuth } from '../auth/AuthContext'
 import { hasPermission, PERMISSION_LABELS } from '../auth/permissions'
 import {
@@ -54,7 +62,15 @@ const LABEL_FIELDS: { key: keyof Labels; hint: string }[] = [
 ]
 
 const SECTIONS: {
-  key: 'marca' | 'sucursales' | 'equipo' | 'etiquetas' | 'punto-de-venta' | 'modulos' | 'auditoria'
+  key:
+    | 'marca'
+    | 'sucursales'
+    | 'equipo'
+    | 'etiquetas'
+    | 'punto-de-venta'
+    | 'modulos'
+    | 'impresora'
+    | 'auditoria'
   label: string
   permission: PermissionAction | 'admin_only'
 }[] = [
@@ -64,6 +80,7 @@ const SECTIONS: {
   { key: 'etiquetas', label: 'Etiquetas', permission: 'manage_branding' },
   { key: 'punto-de-venta', label: 'Punto de venta', permission: 'manage_branding' },
   { key: 'modulos', label: 'Módulos', permission: 'manage_branding' },
+  { key: 'impresora', label: 'Impresora', permission: 'manage_branding' },
   { key: 'auditoria', label: 'Auditoría', permission: 'view_audit_log' },
 ]
 
@@ -130,6 +147,7 @@ export default function ConfiguracionScreen() {
       {activeSection === 'etiquetas' && <LabelsSection />}
       {activeSection === 'punto-de-venta' && <PosLayoutSection />}
       {activeSection === 'modulos' && <ModulesSection />}
+      {activeSection === 'impresora' && <PrinterSection />}
       {activeSection === 'auditoria' && <AuditLogSection />}
     </SafeAreaView>
   )
@@ -988,6 +1006,129 @@ function ModulesSection() {
           {feedback.text}
         </Text>
       )}
+    </ScrollView>
+  )
+}
+
+// El emparejamiento se guarda por dispositivo (AsyncStorage, ver
+// printerStorage.ts), no por negocio — cada caja/celular con su propia
+// impresora térmica. Requiere el dev client de EAS (no funciona en Expo
+// Go) porque react-native-esc-pos-printer es un módulo nativo.
+function PrinterSection() {
+  const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
+  const { start, isDiscovering, printers, printerError } = usePrintersDiscovery()
+  const [paired, setPaired] = useState<PairedPrinter | null>(null)
+  const [testing, setTesting] = useState(false)
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
+    null,
+  )
+
+  useEffect(() => {
+    getPairedPrinter().then(setPaired)
+  }, [])
+
+  async function handleSelect(printer: DeviceInfo) {
+    const next = { target: printer.target, deviceName: printer.deviceName }
+    await setPairedPrinter(next)
+    setPaired(next)
+    setFeedback(null)
+  }
+
+  async function handleForget() {
+    await clearPairedPrinter()
+    setPaired(null)
+  }
+
+  async function handleTestPrint() {
+    if (!paired) return
+    setTesting(true)
+    setFeedback(null)
+    try {
+      await printTestTicket(paired)
+      setFeedback({ type: 'success', text: 'Ticket de prueba enviado' })
+    } catch (error) {
+      setFeedback({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'No se pudo imprimir',
+      })
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  return (
+    <ScrollView style={styles.section} contentContainerStyle={styles.sectionContent}>
+      <Text style={styles.cardTitle}>Impresora de tickets</Text>
+      <Text style={styles.cardSubtitle}>
+        Empareja la impresora térmica de esta caja. Solo hace falta una vez por celular/tablet —
+        después, cada venta se imprime sola.
+      </Text>
+
+      {paired ? (
+        <View style={styles.card}>
+          <Text style={styles.cardName}>{paired.deviceName || 'Impresora'}</Text>
+          <Text style={styles.cardCaption}>{paired.target}</Text>
+          <View style={styles.rowButtons}>
+            <TouchableOpacity
+              style={[
+                styles.saveButton,
+                styles.rowButtonFlex,
+                { backgroundColor: palette.primary },
+                testing && styles.disabled,
+              ]}
+              activeOpacity={0.8}
+              disabled={testing}
+              onPress={handleTestPrint}
+            >
+              <Text style={styles.saveButtonText}>
+                {testing ? 'Imprimiendo…' : 'Imprimir prueba'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.dangerButton} activeOpacity={0.7} onPress={handleForget}>
+              <Text style={styles.dangerButtonText}>Olvidar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <Text style={styles.emptyText}>No hay ninguna impresora configurada en este celular.</Text>
+      )}
+
+      {feedback && (
+        <Text style={feedback.type === 'success' ? styles.textSuccess : styles.textDanger}>
+          {feedback.text}
+        </Text>
+      )}
+
+      <TouchableOpacity
+        style={[
+          styles.saveButton,
+          { backgroundColor: palette.primary },
+          isDiscovering && styles.disabled,
+        ]}
+        activeOpacity={0.8}
+        disabled={isDiscovering}
+        onPress={() => start()}
+      >
+        <Text style={styles.saveButtonText}>
+          {isDiscovering ? 'Buscando…' : 'Buscar impresoras Bluetooth'}
+        </Text>
+      </TouchableOpacity>
+
+      {printerError && <Text style={styles.textDanger}>{printerError.message}</Text>}
+
+      {printers.map((printer) => (
+        <TouchableOpacity
+          key={printer.target}
+          style={styles.card}
+          activeOpacity={0.75}
+          onPress={() => handleSelect(printer)}
+        >
+          <Text style={styles.cardName}>{printer.deviceName || 'Impresora sin nombre'}</Text>
+          <Text style={styles.cardCaption}>{printer.target}</Text>
+        </TouchableOpacity>
+      ))}
     </ScrollView>
   )
 }
