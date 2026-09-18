@@ -36,12 +36,14 @@ import {
   type CatalogProductMatch,
   type ServiceItem,
 } from '../hooks/useInventory'
+import { useBrandPalette, type BrandPalette } from '../theme/useBrandPalette'
 
 const PAGE_SIZES = [10, 25, 50]
 
 export default function InventoryScreen() {
   const activeBranchId = useActiveBranch()
   const { data: modules } = useBusinessModules()
+  const palette = useBrandPalette()
   const [tab, setTab] = useState<'productos' | 'servicios'>('productos')
 
   useEffect(() => {
@@ -60,8 +62,18 @@ export default function InventoryScreen() {
     <SafeAreaView style={styles.container}>
       {modules?.servicios !== false && (
         <View style={styles.tabRow}>
-          <TabButton active={tab === 'productos'} onPress={() => setTab('productos')} label="Productos" />
-          <TabButton active={tab === 'servicios'} onPress={() => setTab('servicios')} label="Servicios" />
+          <TabButton
+            active={tab === 'productos'}
+            onPress={() => setTab('productos')}
+            label="Productos"
+            palette={palette}
+          />
+          <TabButton
+            active={tab === 'servicios'}
+            onPress={() => setTab('servicios')}
+            label="Servicios"
+            palette={palette}
+          />
         </View>
       )}
       {tab === 'productos' ? (
@@ -77,15 +89,18 @@ function TabButton({
   active,
   onPress,
   label,
+  palette,
 }: {
   active: boolean
   onPress: () => void
   label: string
+  palette: BrandPalette
 }) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.tabButton, active && styles.tabButtonActive]}
+      activeOpacity={0.75}
+      style={[styles.tabButton, active && { backgroundColor: palette.primary, borderColor: palette.primary }]}
     >
       <Text style={[styles.tabButtonText, active && styles.tabButtonTextActive]}>{label}</Text>
     </TouchableOpacity>
@@ -93,6 +108,7 @@ function TabButton({
 }
 
 function ProductsSection({ branchId }: { branchId: string }) {
+  const palette = useBrandPalette()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
   const [search, setSearch] = useState('')
@@ -125,12 +141,16 @@ function ProductsSection({ branchId }: { branchId: string }) {
           placeholder="Buscar por nombre o código de barras…"
           placeholderTextColor="#94a3b8"
         />
-        <TouchableOpacity style={styles.addButton} onPress={() => setShowModal(true)}>
+        <TouchableOpacity
+          style={[styles.addButton, { backgroundColor: palette.primary }]}
+          activeOpacity={0.8}
+          onPress={() => setShowModal(true)}
+        >
           <Text style={styles.addButtonText}>+ Agregar</Text>
         </TouchableOpacity>
       </View>
 
-      {isLoading && <ActivityIndicator style={styles.loading} color="#2563eb" />}
+      {isLoading && <ActivityIndicator style={styles.loading} color={palette.primary} />}
 
       <FlatList
         data={products}
@@ -139,7 +159,9 @@ function ProductsSection({ branchId }: { branchId: string }) {
         ListEmptyComponent={
           !isLoading ? <Text style={styles.emptyText}>No hay productos que coincidan.</Text> : null
         }
-        renderItem={({ item }) => <ProductCard product={item} branchId={branchId} />}
+        renderItem={({ item }) => (
+          <ProductCard product={item} branchId={branchId} palette={palette} />
+        )}
         ListFooterComponent={
           <View style={styles.paginationBlock}>
             <View style={styles.pageSizeRow}>
@@ -150,7 +172,11 @@ function ProductsSection({ branchId }: { branchId: string }) {
                     setPageSize(size)
                     setPage(1)
                   }}
-                  style={[styles.pageSizeChip, pageSize === size && styles.pageSizeChipActive]}
+                  activeOpacity={0.75}
+                  style={[
+                    styles.pageSizeChip,
+                    pageSize === size && { backgroundColor: palette.primary, borderColor: palette.primary },
+                  ]}
                 >
                   <Text
                     style={[
@@ -192,7 +218,15 @@ function ProductsSection({ branchId }: { branchId: string }) {
   )
 }
 
-function ProductCard({ product, branchId }: { product: BusinessProduct; branchId: string }) {
+function ProductCard({
+  product,
+  branchId,
+  palette,
+}: {
+  product: BusinessProduct
+  branchId: string
+  palette: BrandPalette
+}) {
   const updateProduct = useUpdateProduct()
   const { data: categories } = useCategories()
   const createCategory = useCreateCategory()
@@ -291,12 +325,17 @@ function ProductCard({ product, branchId }: { product: BusinessProduct; branchId
           Stock: {product.stock} {product.unitName}
         </Text>
         <TouchableOpacity onPress={() => setShowAdjust(true)}>
-          <Text style={styles.adjustLink}>Ajustar</Text>
+          <Text style={[styles.adjustLink, { color: palette.dark }]}>Ajustar</Text>
         </TouchableOpacity>
       </View>
 
       <TouchableOpacity
-        style={[styles.saveButton, (!dirty || updateProduct.isPending) && styles.disabled]}
+        style={[
+          styles.saveButton,
+          { backgroundColor: palette.primary },
+          (!dirty || updateProduct.isPending) && styles.disabled,
+        ]}
+        activeOpacity={0.8}
         disabled={!dirty || updateProduct.isPending}
         onPress={handleSave}
       >
@@ -324,6 +363,7 @@ function AdjustStockModal({
   onClose: () => void
 }) {
   const adjustStock = useAdjustStock()
+  const palette = useBrandPalette()
   const [quantity, setQuantity] = useState('')
   const [reason, setReason] = useState('')
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
@@ -377,7 +417,12 @@ function AdjustStockModal({
         </Text>
       )}
       <TouchableOpacity
-        style={[styles.saveButton, (adjustStock.isPending || !quantity) && styles.disabled]}
+        style={[
+          styles.saveButton,
+          { backgroundColor: palette.primary },
+          (adjustStock.isPending || !quantity) && styles.disabled,
+        ]}
+        activeOpacity={0.8}
         disabled={adjustStock.isPending || !quantity}
         onPress={handleSubmit}
       >
@@ -391,6 +436,7 @@ function AdjustStockModal({
 
 function ProductFormModal({ branchId, onClose }: { branchId: string; onClose: () => void }) {
   const createProduct = useCreateProduct()
+  const palette = useBrandPalette()
   const { data: brands } = useBrands()
   const { data: units } = useUnits()
   const { data: families } = useProductFamilies()
@@ -512,9 +558,14 @@ function ProductFormModal({ branchId, onClose }: { branchId: string; onClose: ()
       )}
 
       {usingExisting && (
-        <View style={styles.reuseBox}>
+        <View
+          style={[
+            styles.reuseBox,
+            { borderColor: palette.primary, backgroundColor: palette.tint },
+          ]}
+        >
           <View style={styles.cardTopInfo}>
-            <Text style={styles.reuseTitle}>{selectedMatch!.name}</Text>
+            <Text style={[styles.reuseTitle, { color: palette.dark }]}>{selectedMatch!.name}</Text>
             <Text style={styles.cardCaption}>
               Reutilizando este producto del catálogo — solo defines tu precio y stock.
             </Text>
@@ -630,11 +681,13 @@ function ProductFormModal({ branchId, onClose }: { branchId: string; onClose: ()
       <TouchableOpacity
         style={[
           styles.saveButton,
+          { backgroundColor: palette.primary },
           (createProduct.isPending ||
             (!usingExisting && (!form.name.trim() || !form.unitId)) ||
             !form.salePrice) &&
             styles.disabled,
         ]}
+        activeOpacity={0.8}
         disabled={
           createProduct.isPending ||
           (!usingExisting && (!form.name.trim() || !form.unitId)) ||
@@ -651,6 +704,7 @@ function ProductFormModal({ branchId, onClose }: { branchId: string; onClose: ()
 }
 
 function ServicesSection() {
+  const palette = useBrandPalette()
   const { data: services, isLoading } = useServicesAdmin()
   const createService = useCreateService()
 
@@ -694,10 +748,10 @@ function ServicesSection() {
           <Text style={styles.sectionSubtitle}>
             Los servicios no manejan stock — solo precio y duración.
           </Text>
-          {isLoading && <ActivityIndicator style={styles.loading} color="#2563eb" />}
+          {isLoading && <ActivityIndicator style={styles.loading} color={palette.primary} />}
         </View>
       }
-      renderItem={({ item }) => <ServiceCard service={item} />}
+      renderItem={({ item }) => <ServiceCard service={item} palette={palette} />}
       ListEmptyComponent={
         !isLoading ? (
           <Text style={styles.emptyText}>Aún no tienes servicios registrados.</Text>
@@ -735,8 +789,10 @@ function ServicesSection() {
           <TouchableOpacity
             style={[
               styles.saveButton,
+              { backgroundColor: palette.primary },
               (createService.isPending || !form.name.trim() || !form.price) && styles.disabled,
             ]}
+            activeOpacity={0.8}
             disabled={createService.isPending || !form.name.trim() || !form.price}
             onPress={handleCreate}
           >
@@ -755,7 +811,7 @@ function ServicesSection() {
   )
 }
 
-function ServiceCard({ service }: { service: ServiceItem }) {
+function ServiceCard({ service, palette }: { service: ServiceItem; palette: BrandPalette }) {
   const updateService = useUpdateService()
   const [form, setForm] = useState({
     name: service.name,
@@ -817,7 +873,12 @@ function ServiceCard({ service }: { service: ServiceItem }) {
         </View>
       </View>
       <TouchableOpacity
-        style={[styles.saveButton, (!dirty || updateService.isPending) && styles.disabled]}
+        style={[
+          styles.saveButton,
+          { backgroundColor: palette.primary },
+          (!dirty || updateService.isPending) && styles.disabled,
+        ]}
+        activeOpacity={0.8}
         disabled={!dirty || updateService.isPending}
         onPress={handleSave}
       >
@@ -921,6 +982,11 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 10,
     gap: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   newServiceCard: {
     borderStyle: 'dashed',
