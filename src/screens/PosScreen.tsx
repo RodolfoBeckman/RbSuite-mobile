@@ -21,6 +21,7 @@ import { usePosLayout } from '../hooks/usePosLayout'
 import { useCreateSale } from '../hooks/useCreateSale'
 import { useLabels } from '../hooks/useLabels'
 import { useBrandPalette } from '../theme/useBrandPalette'
+import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
 import type { CartLine, CatalogItem, PaymentMethod } from '../types'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
@@ -35,6 +36,8 @@ export default function PosScreen() {
   const activeBranchId = useActiveBranch()
   const labels = useLabels()
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
   const { data: posLayout = 'catalogo' } = usePosLayout()
   const { data: modules } = useBusinessModules()
   const {
@@ -129,7 +132,7 @@ export default function PosScreen() {
             value={search}
             onChangeText={setSearch}
             placeholder="Buscar producto o servicio…"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={colors.placeholder}
             style={styles.search}
           />
         )}
@@ -274,219 +277,220 @@ export default function PosScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 10,
-  },
-  search: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#0f172a',
-  },
-  loading: {
-    marginTop: 24,
-  },
-  errorText: {
-    color: '#dc2626',
-    textAlign: 'center',
-    marginTop: 12,
-  },
-  emptyText: {
-    color: '#94a3b8',
-    textAlign: 'center',
-    marginTop: 24,
-  },
-  cartBar: {
-    position: 'absolute',
-    left: 12,
-    right: 12,
-    bottom: 16,
-    backgroundColor: '#0f172a',
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  cartBarText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  cartBarAction: {
-    color: '#93c5fd',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalBackdropTap: {
-    flex: 1,
-  },
-  sheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 28,
-    maxHeight: '85%',
-  },
-  sheetHandle: {
-    alignSelf: 'center',
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#cbd5e1',
-    marginBottom: 12,
-  },
-  sheetTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 8,
-  },
-  cartList: {
-    maxHeight: 260,
-  },
-  cartRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  cartRowInfo: {
-    flex: 1,
-    marginRight: 8,
-  },
-  cartRowName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1e293b',
-  },
-  cartRowUnit: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginTop: 2,
-  },
-  qtyControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  qtyButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  qtyButtonText: {
-    fontSize: 16,
-    color: '#475569',
-  },
-  qtyValue: {
-    minWidth: 20,
-    textAlign: 'center',
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0f172a',
-  },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 14,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-  },
-  totalLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  totalValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1d4ed8',
-  },
-  paymentRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 12,
-  },
-  paymentChip: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  paymentChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748b',
-  },
-  feedback: {
-    marginTop: 12,
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  feedbackSuccess: {
-    color: '#16a34a',
-  },
-  feedbackError: {
-    color: '#dc2626',
-  },
-  checkoutButton: {
-    marginTop: 14,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
-  },
-  checkoutButtonDisabled: {
-    opacity: 0.5,
-  },
-  checkoutButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 15,
-  },
-})
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 8,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 10,
+    },
+    search: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 14,
+      color: colors.text,
+    },
+    loading: {
+      marginTop: 24,
+    },
+    errorText: {
+      color: colors.danger,
+      textAlign: 'center',
+      marginTop: 12,
+    },
+    emptyText: {
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginTop: 24,
+    },
+    cartBar: {
+      position: 'absolute',
+      left: 12,
+      right: 12,
+      bottom: 16,
+      backgroundColor: '#0f172a',
+      borderRadius: 14,
+      paddingVertical: 14,
+      paddingHorizontal: 18,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOpacity: 0.2,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 4,
+    },
+    cartBarText: {
+      color: '#fff',
+      fontWeight: '700',
+      fontSize: 14,
+    },
+    cartBarAction: {
+      color: '#93c5fd',
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      justifyContent: 'flex-end',
+    },
+    modalBackdropTap: {
+      flex: 1,
+    },
+    sheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingHorizontal: 16,
+      paddingTop: 10,
+      paddingBottom: 28,
+      maxHeight: '85%',
+    },
+    sheetHandle: {
+      alignSelf: 'center',
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.border,
+      marginBottom: 12,
+    },
+    sheetTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 8,
+    },
+    cartList: {
+      maxHeight: 260,
+    },
+    cartRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    },
+    cartRowInfo: {
+      flex: 1,
+      marginRight: 8,
+    },
+    cartRowName: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    cartRowUnit: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    qtyControls: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    qtyButton: {
+      width: 28,
+      height: 28,
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    qtyButtonText: {
+      fontSize: 16,
+      color: colors.textSecondary,
+    },
+    qtyValue: {
+      minWidth: 20,
+      textAlign: 'center',
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    totalRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 14,
+      paddingTop: 12,
+      borderTopWidth: 1,
+      borderTopColor: colors.divider,
+    },
+    totalLabel: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    totalValue: {
+      fontSize: 18,
+      fontWeight: '700',
+    },
+    paymentRow: {
+      flexDirection: 'row',
+      gap: 8,
+      marginTop: 12,
+    },
+    paymentChip: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingVertical: 10,
+      alignItems: 'center',
+    },
+    paymentChipText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textSecondary,
+    },
+    feedback: {
+      marginTop: 12,
+      fontSize: 13,
+      textAlign: 'center',
+    },
+    feedbackSuccess: {
+      color: colors.success,
+    },
+    feedbackError: {
+      color: colors.danger,
+    },
+    checkoutButton: {
+      marginTop: 14,
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 3 },
+      elevation: 2,
+    },
+    checkoutButtonDisabled: {
+      opacity: 0.5,
+    },
+    checkoutButtonText: {
+      color: '#fff',
+      fontWeight: '700',
+      fontSize: 15,
+    },
+  })
+}
