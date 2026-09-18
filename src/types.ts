@@ -1,6 +1,16 @@
-// Los tres roles fijos del MVP (mismo modelo que la web: sin pantalla de
-// permisos granulares todavía, eso queda para la fase P1).
+// Los tres roles fijos del MVP siguen igual — lo que agrega la fase P1 es
+// permission_overrides (ver src/auth/permissions.ts): excepciones por
+// persona sobre el default de su rol para un set fijo de acciones
+// sensibles, no un sistema de permisos libre. Mismo modelo que la web.
 export type RoleName = 'administrador' | 'gerente' | 'vendedor'
+
+export type PermissionAction =
+  | 'create_products'
+  | 'edit_products'
+  | 'cancel_sale'
+  | 'manage_branches'
+  | 'manage_branding'
+  | 'view_audit_log'
 
 export interface Membership {
   businessId: string
@@ -9,7 +19,12 @@ export interface Membership {
   // sucursal (Vendedor).
   branchId: string | null
   role: RoleName
+  permissionOverrides: Partial<Record<PermissionAction, boolean>>
 }
+
+// Layouts de venta por giro de negocio (businesses.pos_layout), mismo
+// concepto que la web.
+export type PosLayout = 'catalogo' | 'ferreteria' | 'abarrotes'
 
 export interface Branch {
   id: string
@@ -23,6 +38,8 @@ export interface CatalogItem {
   name: string
   price: number
   stock: number | null
+  barcode: string | null
+  categoryName: string | null
 }
 
 export interface CartLine {

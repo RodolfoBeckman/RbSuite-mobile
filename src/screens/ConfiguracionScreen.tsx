@@ -14,13 +14,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
+import { useAuth } from '../auth/AuthContext'
+import { hasPermission, PERMISSION_LABELS } from '../auth/permissions'
 import {
   DEFAULT_PRIMARY_COLOR,
   useBranding,
   useUpdateBrandColor,
   useUploadLogo,
 } from '../hooks/useBranding'
+import { useBusinessModules, useUpdateBusinessModules, type BusinessModules } from '../hooks/useBusinessModules'
 import { useLabels, useUpdateLabels } from '../hooks/useLabels'
+import { usePosLayout, useUpdatePosLayout } from '../hooks/usePosLayout'
 import {
   useBranches,
   useCreateBranch,
@@ -37,7 +41,7 @@ import {
 } from '../hooks/useTeam'
 import { useAuditLogs } from '../hooks/useAuditLogs'
 import type { Labels } from '../labels/defaultLabels'
-import type { RoleName } from '../types'
+import type { PermissionAction, PosLayout, RoleName } from '../types'
 
 const LABEL_FIELDS: { key: keyof Labels; hint: string }[] = [
   { key: 'navDashboard', hint: 'Menú — Dashboard' },
@@ -47,35 +51,62 @@ const LABEL_FIELDS: { key: keyof Labels; hint: string }[] = [
   { key: 'posTitle', hint: 'Título dentro del punto de venta' },
 ]
 
-const SECTIONS = [
-  { key: 'marca', label: 'Marca' },
-  { key: 'sucursales', label: 'Sucursales' },
-  { key: 'equipo', label: 'Equipo' },
-  { key: 'etiquetas', label: 'Etiquetas' },
-  { key: 'auditoria', label: 'Auditoría' },
-] as const
+const SECTIONS: {
+  key: 'marca' | 'sucursales' | 'equipo' | 'etiquetas' | 'punto-de-venta' | 'modulos' | 'auditoria'
+  label: string
+  permission: PermissionAction | 'admin_only'
+}[] = [
+  { key: 'marca', label: 'Marca', permission: 'manage_branding' },
+  { key: 'sucursales', label: 'Sucursales', permission: 'manage_branches' },
+  { key: 'equipo', label: 'Equipo', permission: 'admin_only' },
+  { key: 'etiquetas', label: 'Etiquetas', permission: 'manage_branding' },
+  { key: 'punto-de-venta', label: 'Punto de venta', permission: 'manage_branding' },
+  { key: 'modulos', label: 'Módulos', permission: 'manage_branding' },
+  { key: 'auditoria', label: 'Auditoría', permission: 'view_audit_log' },
+]
 
 type SectionKey = (typeof SECTIONS)[number]['key']
 
+function useVisibleSections() {
+  const { membership } = useAuth()
+  return SECTIONS.filter((item) =>
+    item.permission === 'admin_only'
+      ? membership?.role === 'administrador'
+      : hasPermission(membership, item.permission),
+  )
+}
+
 export default function ConfiguracionScreen() {
-  const [section, setSection] = useState<SectionKey>('marca')
+  const visibleSections = useVisibleSections()
+  const [section, setSection] = useState<SectionKey | null>(null)
+  const activeSection = section && visibleSections.some((s) => s.key === section)
+    ? section
+    : (visibleSections[0]?.key ?? null)
+
+  if (!activeSection) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.emptyText}>No tienes acceso a ninguna sección de Configuración.</Text>
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.tabBar}>
         <FlatList
           horizontal
-          data={SECTIONS}
+          data={visibleSections}
           keyExtractor={(s) => s.key}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabBarContent}
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => setSection(item.key)}
-              style={[styles.tabChip, section === item.key && styles.tabChipActive]}
+              style={[styles.tabChip, activeSection === item.key && styles.tabChipActive]}
             >
               <Text
-                style={[styles.tabChipText, section === item.key && styles.tabChipTextActive]}
+                style={[styles.tabChipText, activeSection === item.key && styles.tabChipTextActive]}
               >
                 {item.label}
               </Text>
@@ -84,11 +115,13 @@ export default function ConfiguracionScreen() {
         />
       </View>
 
-      {section === 'marca' && <BrandingSection />}
-      {section === 'sucursales' && <BranchesSection />}
-      {section === 'equipo' && <TeamSection />}
-      {section === 'etiquetas' && <LabelsSection />}
-      {section === 'auditoria' && <AuditLogSection />}
+      {activeSection === 'marca' && <BrandingSection />}
+      {activeSection === 'sucursales' && <BranchesSection />}
+      {activeSection === 'equipo' && <TeamSection />}
+      {activeSection === 'etiquetas' && <LabelsSection />}
+      {activeSection === 'punto-de-venta' && <PosLayoutSection />}
+      {activeSection === 'modulos' && <ModulesSection />}
+      {activeSection === 'auditoria' && <AuditLogSection />}
     </SafeAreaView>
   )
 }
@@ -566,13 +599,25 @@ function TeamMemberCard({
   const updateMember = useUpdateTeamMember()
   const removeMember = useRemoveTeamMember()
 
-  const [form, setForm] = useState<{ role: RoleName; branchId: string }>({
+  const [form, setForm] = useState<{
+    role: RoleName
+    branchId: string
+    permissionOverrides: Partial<Record<PermissionAction, boolean>>
+  }>({
     role: member.role,
     branchId: member.branchId ?? '',
+    permissionOverrides: member.permissionOverrides,
   })
   const [feedback, setFeedback] = useState<'success' | 'error' | null>(null)
 
-  const dirty = form.role !== member.role || form.branchId !== (member.branchId ?? '')
+  const dirty =
+    form.role !== member.role ||
+    form.branchId !== (member.branchId ?? '') ||
+    JSON.stringify(form.permissionOverrides) !== JSON.stringify(member.permissionOverrides)
+
+  function togglePermission(action: PermissionAction, value: boolean) {
+    setForm((p) => ({ ...p, permissionOverrides: { ...p.permissionOverrides, [action]: value } }))
+  }
 
   function handleSave() {
     if (form.role === 'vendedor' && !form.branchId) {
@@ -585,6 +630,7 @@ function TeamMemberCard({
         userId: member.userId,
         role: form.role,
         branchId: form.role === 'vendedor' ? form.branchId : null,
+        permissionOverrides: form.permissionOverrides,
       },
       { onSuccess: () => setFeedback('success'), onError: () => setFeedback('error') },
     )
@@ -617,6 +663,23 @@ function TeamMemberCard({
             onChange={(id) => setForm((p) => ({ ...p, branchId: id }))}
           />
         </>
+      )}
+      {form.role !== 'administrador' && (
+        <View style={styles.permissionsBlock}>
+          <Text style={styles.label}>Permisos adicionales (sobre lo que ya puede su rol)</Text>
+          {PERMISSION_LABELS.map((permission) => (
+            <View key={permission.value} style={styles.switchRow}>
+              <Text style={styles.permissionLabel}>{permission.label}</Text>
+              <Switch
+                value={hasPermission(
+                  { role: form.role, permissionOverrides: form.permissionOverrides },
+                  permission.value,
+                )}
+                onValueChange={(v) => togglePermission(permission.value, v)}
+              />
+            </View>
+          ))}
+        </View>
       )}
       <View style={styles.rowButtons}>
         <TouchableOpacity
@@ -700,6 +763,156 @@ function LabelsSection() {
           {updateLabels.isPending ? 'Guardando…' : 'Guardar textos'}
         </Text>
       </TouchableOpacity>
+
+      {feedback && (
+        <Text style={feedback.type === 'success' ? styles.textSuccess : styles.textDanger}>
+          {feedback.text}
+        </Text>
+      )}
+    </ScrollView>
+  )
+}
+
+const POS_LAYOUT_OPTIONS: { value: PosLayout; label: string; hint: string }[] = [
+  {
+    value: 'catalogo',
+    label: 'Catálogo',
+    hint: 'Tarjetas visuales. Ideal para salones, boutiques y negocios con pocos productos y servicios.',
+  },
+  {
+    value: 'ferreteria',
+    label: 'Ferretería',
+    hint: 'Lista agrupada por departamento. Ideal para catálogos grandes organizados por categoría.',
+  },
+  {
+    value: 'abarrotes',
+    label: 'Abarrotes',
+    hint: 'Prioriza escanear o teclear el código de barras, con el total siempre visible en grande.',
+  },
+]
+
+function PosLayoutSection() {
+  const { data: posLayout, isLoading } = usePosLayout()
+  const updatePosLayout = useUpdatePosLayout()
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
+    null,
+  )
+
+  function handleSelect(value: PosLayout) {
+    if (value === posLayout) return
+    setFeedback(null)
+    updatePosLayout.mutate(value, {
+      onSuccess: () => setFeedback({ type: 'success', text: 'Diseño de venta actualizado' }),
+      onError: (error) =>
+        setFeedback({
+          type: 'error',
+          text: error instanceof Error ? error.message : 'No se pudo guardar',
+        }),
+    })
+  }
+
+  return (
+    <ScrollView style={styles.section} contentContainerStyle={styles.sectionContent}>
+      <Text style={styles.cardTitle}>Punto de venta</Text>
+      <Text style={styles.cardSubtitle}>
+        Elige el diseño de la pantalla de venta según cómo trabaja tu negocio.
+      </Text>
+
+      {isLoading && <ActivityIndicator color="#2563eb" style={styles.loading} />}
+
+      {POS_LAYOUT_OPTIONS.map((option) => (
+        <TouchableOpacity
+          key={option.value}
+          onPress={() => handleSelect(option.value)}
+          disabled={updatePosLayout.isPending}
+          style={[styles.card, posLayout === option.value && styles.optionCardActive]}
+        >
+          <Text style={styles.cardName}>{option.label}</Text>
+          <Text style={styles.cardCaption}>{option.hint}</Text>
+        </TouchableOpacity>
+      ))}
+
+      {feedback && (
+        <Text style={feedback.type === 'success' ? styles.textSuccess : styles.textDanger}>
+          {feedback.text}
+        </Text>
+      )}
+    </ScrollView>
+  )
+}
+
+const MODULE_OPTIONS: { key: keyof BusinessModules; label: string; hint: string }[] = [
+  {
+    key: 'caja',
+    label: 'Caja',
+    hint: 'Apertura/cierre de caja y control de efectivo.',
+  },
+  {
+    key: 'inventario',
+    label: 'Inventario',
+    hint: 'Productos con stock por sucursal.',
+  },
+  {
+    key: 'servicios',
+    label: 'Servicios',
+    hint: 'Servicios sin stock (ej. cortes, consultas).',
+  },
+]
+
+function ModulesSection() {
+  const { data: modules, isLoading } = useBusinessModules()
+  const updateModules = useUpdateBusinessModules()
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
+    null,
+  )
+
+  function handleToggle(key: keyof BusinessModules, value: boolean) {
+    if (!modules) return
+    setFeedback(null)
+    updateModules.mutate(
+      { ...modules, [key]: value },
+      {
+        onSuccess: () => setFeedback({ type: 'success', text: 'Módulos actualizados' }),
+        onError: (error) =>
+          setFeedback({
+            type: 'error',
+            text: error instanceof Error ? error.message : 'No se pudo guardar',
+          }),
+      },
+    )
+  }
+
+  if (isLoading || !modules) {
+    return (
+      <View style={styles.section}>
+        <ActivityIndicator color="#2563eb" />
+      </View>
+    )
+  }
+
+  return (
+    <ScrollView style={styles.section} contentContainerStyle={styles.sectionContent}>
+      <Text style={styles.cardTitle}>Módulos</Text>
+      <Text style={styles.cardSubtitle}>
+        Prende o apaga secciones enteras según cómo trabaja tu negocio. Se puede reactivar en
+        cualquier momento sin perder nada de lo ya capturado.
+      </Text>
+
+      {MODULE_OPTIONS.map((option) => (
+        <View key={option.key} style={styles.card}>
+          <View style={styles.switchRow}>
+            <View style={styles.cardTopInfo}>
+              <Text style={styles.cardName}>{option.label}</Text>
+              <Text style={styles.cardCaption}>{option.hint}</Text>
+            </View>
+            <Switch
+              value={modules[option.key]}
+              onValueChange={(v) => handleToggle(option.key, v)}
+              disabled={updateModules.isPending}
+            />
+          </View>
+        </View>
+      ))}
 
       {feedback && (
         <Text style={feedback.type === 'success' ? styles.textSuccess : styles.textDanger}>
@@ -1017,6 +1230,14 @@ const styles = StyleSheet.create({
   dashedCard: {
     borderStyle: 'dashed',
   },
+  optionCardActive: {
+    borderColor: '#2563eb',
+    backgroundColor: '#dbeafe',
+  },
+  cardTopInfo: {
+    flex: 1,
+    marginRight: 8,
+  },
   cardName: {
     fontSize: 14,
     fontWeight: '700',
@@ -1057,6 +1278,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 10,
+  },
+  permissionsBlock: {
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    marginTop: 4,
+    paddingTop: 10,
+  },
+  permissionLabel: {
+    flex: 1,
+    fontSize: 12,
+    color: '#475569',
+    marginRight: 8,
   },
   rowButtons: {
     flexDirection: 'row',

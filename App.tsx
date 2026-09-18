@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { AuthProvider, useAuth } from './src/auth/AuthContext'
+import { useBusinessModules } from './src/hooks/useBusinessModules'
 import { useLabels } from './src/hooks/useLabels'
 import { supabase } from './src/lib/supabase'
 import LoginScreen from './src/screens/LoginScreen'
@@ -73,8 +74,12 @@ function SignOutButton() {
 function MainTabs() {
   const { membership } = useAuth()
   const labels = useLabels()
-  const canSeeInventory = membership?.role === 'administrador' || membership?.role === 'gerente'
-  const canSeeConfig = membership?.role === 'administrador'
+  const { data: modules } = useBusinessModules()
+  const canSeeCaja = modules?.caja !== false
+  const canSeeInventory =
+    modules?.inventario !== false &&
+    (membership?.role === 'administrador' || membership?.role === 'gerente')
+  const canSeeConfig = membership?.role === 'administrador' || membership?.role === 'gerente'
 
   return (
     <Tab.Navigator
@@ -96,11 +101,13 @@ function MainTabs() {
         component={PosScreen}
         options={{ title: labels.posTitle, tabBarLabel: labels.navPos }}
       />
-      <Tab.Screen
-        name="Caja"
-        component={CajaScreen}
-        options={{ title: 'Caja', tabBarLabel: labels.navCaja }}
-      />
+      {canSeeCaja && (
+        <Tab.Screen
+          name="Caja"
+          component={CajaScreen}
+          options={{ title: 'Caja', tabBarLabel: labels.navCaja }}
+        />
+      )}
       <Tab.Screen
         name="Ventas"
         component={SalesHistoryScreen}

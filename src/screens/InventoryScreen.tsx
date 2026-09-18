@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
   FlatList,
@@ -14,6 +14,7 @@ import BranchPicker from '../components/BranchPicker'
 import ComboCreateSelect from '../components/ComboCreateSelect'
 import FormModal from '../components/FormModal'
 import { useActiveBranch } from '../hooks/useActiveBranch'
+import { useBusinessModules } from '../hooks/useBusinessModules'
 import {
   useAdjustStock,
   useBrands,
@@ -40,7 +41,12 @@ const PAGE_SIZES = [10, 25, 50]
 
 export default function InventoryScreen() {
   const activeBranchId = useActiveBranch()
+  const { data: modules } = useBusinessModules()
   const [tab, setTab] = useState<'productos' | 'servicios'>('productos')
+
+  useEffect(() => {
+    if (modules?.servicios === false) setTab('productos')
+  }, [modules?.servicios])
 
   if (!activeBranchId) {
     return (
@@ -52,10 +58,12 @@ export default function InventoryScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.tabRow}>
-        <TabButton active={tab === 'productos'} onPress={() => setTab('productos')} label="Productos" />
-        <TabButton active={tab === 'servicios'} onPress={() => setTab('servicios')} label="Servicios" />
-      </View>
+      {modules?.servicios !== false && (
+        <View style={styles.tabRow}>
+          <TabButton active={tab === 'productos'} onPress={() => setTab('productos')} label="Productos" />
+          <TabButton active={tab === 'servicios'} onPress={() => setTab('servicios')} label="Servicios" />
+        </View>
+      )}
       {tab === 'productos' ? (
         <ProductsSection branchId={activeBranchId} />
       ) : (

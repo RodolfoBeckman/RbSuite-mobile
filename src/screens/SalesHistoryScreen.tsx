@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native'
 import { useAuth } from '../auth/AuthContext'
+import { hasPermission } from '../auth/permissions'
 import { useCancelSale, useSalesHistory } from '../hooks/useSales'
 import type { Sale } from '../types'
 
@@ -23,7 +24,7 @@ const dateTime = new Intl.DateTimeFormat('es-MX', {
 
 export default function SalesHistoryScreen() {
   const { membership } = useAuth()
-  const canCancel = membership?.role === 'administrador' || membership?.role === 'gerente'
+  const canCancel = hasPermission(membership, 'cancel_sale')
 
   const { data: sales, isLoading, error } = useSalesHistory(7)
   const cancelSale = useCancelSale()
