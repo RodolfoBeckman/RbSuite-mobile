@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { AuthProvider, useAuth } from './src/auth/AuthContext'
+import BranchSwitcherButton from './src/components/BranchSwitcherButton'
 import { useBusinessModules } from './src/hooks/useBusinessModules'
 import { useLabels } from './src/hooks/useLabels'
 import { supabase } from './src/lib/supabase'
@@ -84,6 +85,15 @@ function ThemeToggleButton() {
   )
 }
 
+function HeaderLeft() {
+  return (
+    <View style={styles.headerLeft}>
+      <ThemeToggleButton />
+      <BranchSwitcherButton />
+    </View>
+  )
+}
+
 function MainTabs() {
   const { membership } = useAuth()
   const labels = useLabels()
@@ -100,7 +110,7 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerRight: SignOutButton,
-        headerLeft: ThemeToggleButton,
+        headerLeft: HeaderLeft,
         headerStyle: { backgroundColor: palette.primary },
         headerTintColor: '#fff',
         headerTitleStyle: styles.headerTitle,
@@ -208,6 +218,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginRight: 4,
     opacity: 0.9,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   themeToggle: {
     marginLeft: 12,
