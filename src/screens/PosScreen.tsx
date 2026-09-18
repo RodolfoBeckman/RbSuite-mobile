@@ -11,8 +11,13 @@ import {
   View,
 } from 'react-native'
 import BranchPicker from '../components/BranchPicker'
+import CatalogGrid from '../components/pos/CatalogGrid'
+import DepartmentList from '../components/pos/DepartmentList'
+import ScanTicket from '../components/pos/ScanTicket'
 import { useActiveBranch } from '../hooks/useActiveBranch'
+import { useBusinessModules } from '../hooks/useBusinessModules'
 import { usePosCatalog } from '../hooks/usePosCatalog'
+import { usePosLayout } from '../hooks/usePosLayout'
 import { useCreateSale } from '../hooks/useCreateSale'
 import { useLabels } from '../hooks/useLabels'
 import type { CartLine, CatalogItem, PaymentMethod } from '../types'
@@ -28,11 +33,13 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
 export default function PosScreen() {
   const activeBranchId = useActiveBranch()
   const labels = useLabels()
+  const { data: posLayout = 'catalogo' } = usePosLayout()
+  const { data: modules } = useBusinessModules()
   const {
     data: catalog,
     isLoading: loadingCatalog,
     error: catalogError,
-  } = usePosCatalog(activeBranchId)
+  } = usePosCatalog(activeBranchId, modules)
 
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState<Map<string, CartLine>>(new Map())
@@ -115,46 +122,35 @@ export default function PosScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>{labels.posTitle}</Text>
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Buscar producto o servicio…"
-          placeholderTextColor="#94a3b8"
-          style={styles.search}
-        />
+        {posLayout !== 'abarrotes' && (
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Buscar producto o servicio…"
+            placeholderTextColor="#94a3b8"
+            style={styles.search}
+          />
+        )}
       </View>
 
       {loadingCatalog && <ActivityIndicator style={styles.loading} color="#2563eb" />}
       {!!catalogError && <Text style={styles.errorText}>No se pudo cargar el catálogo.</Text>}
 
-      <FlatList
-        data={filteredCatalog}
-        keyExtractor={(item) => `${item.itemType}-${item.id}`}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={
-          !loadingCatalog ? <Text style={styles.emptyText}>Sin resultados.</Text> : null
-        }
-        renderItem={({ item }) => {
-          const outOfStock = item.itemType === 'product' && (item.stock ?? 0) <= 0
-          return (
-            <TouchableOpacity
-              disabled={outOfStock}
-              onPress={() => addToCart(item)}
-              style={[styles.card, outOfStock && styles.cardDisabled]}
-            >
-              <Text style={styles.cardName} numberOfLines={2}>
-                {item.name}
-              </Text>
-              <Text style={styles.cardPrice}>{currency.format(item.price)}</Text>
-              {item.itemType === 'product' && (
-                <Text style={styles.cardStock}>Stock: {item.stock}</Text>
-              )}
-            </TouchableOpacity>
-          )
-        }}
-      />
+      {posLayout === 'ferreteria' && (
+        <DepartmentList items={filteredCatalog} onAdd={addToCart} />
+      )}
+      {posLayout === 'abarrotes' && (
+        <ScanTicket
+          items={filteredCatalog}
+          search={search}
+          setSearch={setSearch}
+          onAdd={addToCart}
+          total={total}
+        />
+      )}
+      {posLayout === 'catalogo' && (
+        <CatalogGrid items={filteredCatalog} loading={loadingCatalog} onAdd={addToCart} />
+      )}
 
       <TouchableOpacity style={styles.cartBar} onPress={() => setCartOpen(true)}>
         <Text style={styles.cartBarText}>
@@ -297,46 +293,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 12,
   },
-  list: {
-    paddingHorizontal: 12,
-    paddingBottom: 90,
-  },
-  row: {
-    gap: 10,
-  },
   emptyText: {
     color: '#94a3b8',
     textAlign: 'center',
     marginTop: 24,
-  },
-  card: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 12,
-    marginBottom: 10,
-    minHeight: 88,
-  },
-  cardDisabled: {
-    opacity: 0.4,
-  },
-  cardName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0f172a',
-    marginBottom: 6,
-  },
-  cardPrice: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1d4ed8',
-  },
-  cardStock: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginTop: 4,
   },
   cartBar: {
     position: 'absolute',
