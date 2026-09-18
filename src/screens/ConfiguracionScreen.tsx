@@ -18,9 +18,9 @@ import { usePrintersDiscovery, type DeviceInfo } from 'react-native-esc-pos-prin
 import { printTestTicket } from '../printing/printReceipt'
 import {
   clearPairedPrinter,
-  getPairedPrinter,
   setPairedPrinter,
-  type PairedPrinter,
+  useInvalidatePairedPrinter,
+  usePairedPrinter,
 } from '../printing/printerStorage'
 import { useAuth } from '../auth/AuthContext'
 import { hasPermission, PERMISSION_LABELS } from '../auth/permissions'
@@ -1019,26 +1019,22 @@ function PrinterSection() {
   const colors = useThemeColors()
   const styles = createStyles(colors)
   const { start, isDiscovering, printers, printerError } = usePrintersDiscovery()
-  const [paired, setPaired] = useState<PairedPrinter | null>(null)
+  const { data: paired } = usePairedPrinter()
+  const invalidatePairedPrinter = useInvalidatePairedPrinter()
   const [testing, setTesting] = useState(false)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null,
   )
 
-  useEffect(() => {
-    getPairedPrinter().then(setPaired)
-  }, [])
-
   async function handleSelect(printer: DeviceInfo) {
-    const next = { target: printer.target, deviceName: printer.deviceName }
-    await setPairedPrinter(next)
-    setPaired(next)
+    await setPairedPrinter({ target: printer.target, deviceName: printer.deviceName })
+    invalidatePairedPrinter()
     setFeedback(null)
   }
 
   async function handleForget() {
     await clearPairedPrinter()
-    setPaired(null)
+    invalidatePairedPrinter()
   }
 
   async function handleTestPrint() {

@@ -11,7 +11,9 @@
       "bundleIdentifier": "com.rbsuite.mobile",
       "infoPlist": {
         "NSBluetoothAlwaysUsageDescription": "Se usa para comunicarse con la impresora de tickets.",
-        "UISupportedExternalAccessoryProtocols": ["com.epson.escpos"]
+        "UISupportedExternalAccessoryProtocols": [
+          "com.epson.escpos"
+        ]
       }
     },
     "android": {
@@ -44,7 +46,8 @@
         {
           "photosPermission": "Se necesita acceso a tus fotos para elegir el logo del negocio."
         }
-      ]
+      ],
+      "expo-sharing"
     ]
   }
 }

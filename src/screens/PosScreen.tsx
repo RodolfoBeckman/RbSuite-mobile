@@ -22,6 +22,8 @@ import { useCreateSale } from '../hooks/useCreateSale'
 import { useLabels } from '../hooks/useLabels'
 import { fetchSaleReceipt } from '../hooks/useSaleReceipt'
 import { printReceipt } from '../printing/printReceipt'
+import { usePairedPrinter } from '../printing/printerStorage'
+import { shareReceiptPdf } from '../printing/receiptPdf'
 import { useBrandPalette } from '../theme/useBrandPalette'
 import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
 import PendingSyncBanner from '../offline/PendingSyncBanner'
@@ -60,6 +62,7 @@ export default function PosScreen() {
   const [printing, setPrinting] = useState(false)
 
   const createSale = useCreateSale()
+  const { data: pairedPrinter } = usePairedPrinter()
 
   const filteredCatalog = useMemo(() => {
     if (!catalog) return []
@@ -134,11 +137,15 @@ export default function PosScreen() {
     setPrinting(true)
     try {
       const receipt = await fetchSaleReceipt(lastSaleId)
-      await printReceipt(receipt)
+      if (pairedPrinter) {
+        await printReceipt(receipt)
+      } else {
+        await shareReceiptPdf(receipt)
+      }
     } catch (error) {
       setFeedback({
         type: 'error',
-        text: error instanceof Error ? error.message : 'No se pudo imprimir el ticket',
+        text: error instanceof Error ? error.message : 'No se pudo generar el ticket',
       })
     } finally {
       setPrinting(false)
@@ -293,7 +300,11 @@ export default function PosScreen() {
                         printing && styles.printLinkDisabled,
                       ]}
                     >
-                      {printing ? 'Imprimiendo…' : 'Imprimir ticket'}
+                      {printing
+                        ? 'Generando…'
+                        : pairedPrinter
+                          ? 'Imprimir ticket'
+                          : 'Generar PDF del ticket'}
                     </Text>
                   </TouchableOpacity>
                 )}

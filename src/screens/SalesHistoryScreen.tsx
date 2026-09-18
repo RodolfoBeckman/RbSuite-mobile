@@ -14,6 +14,8 @@ import { hasPermission } from '../auth/permissions'
 import { fetchSaleReceipt } from '../hooks/useSaleReceipt'
 import { useCancelSale, useSalesHistory } from '../hooks/useSales'
 import { printReceipt } from '../printing/printReceipt'
+import { usePairedPrinter } from '../printing/printerStorage'
+import { shareReceiptPdf } from '../printing/receiptPdf'
 import { useBrandPalette } from '../theme/useBrandPalette'
 import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
 import type { Sale } from '../types'
@@ -35,6 +37,7 @@ export default function SalesHistoryScreen() {
 
   const { data: sales, isLoading, error } = useSalesHistory(7)
   const cancelSale = useCancelSale()
+  const { data: pairedPrinter } = usePairedPrinter()
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null,
   )
@@ -45,11 +48,15 @@ export default function SalesHistoryScreen() {
     setFeedback(null)
     try {
       const receipt = await fetchSaleReceipt(saleId)
-      await printReceipt(receipt)
+      if (pairedPrinter) {
+        await printReceipt(receipt)
+      } else {
+        await shareReceiptPdf(receipt)
+      }
     } catch (error) {
       setFeedback({
         type: 'error',
-        text: error instanceof Error ? error.message : 'No se pudo imprimir el ticket',
+        text: error instanceof Error ? error.message : 'No se pudo generar el ticket',
       })
     } finally {
       setPrintingId(null)
@@ -123,7 +130,11 @@ export default function SalesHistoryScreen() {
                 onPress={() => handlePrint(sale.id)}
               >
                 <Text style={styles.reprintButtonText}>
-                  {printingId === sale.id ? 'Imprimiendo…' : 'Reimprimir'}
+                  {printingId === sale.id
+                    ? 'Generando…'
+                    : pairedPrinter
+                      ? 'Reimprimir'
+                      : 'PDF'}
                 </Text>
               </TouchableOpacity>
               {sale.status === 'cancelled' ? (
