@@ -17,7 +17,9 @@ export interface ThemeColors {
   textMuted: string
   placeholder: string
   danger: string
+  dangerTint: string
   success: string
+  successTint: string
   overlay: string
 }
 
@@ -32,7 +34,9 @@ const LIGHT: ThemeColors = {
   textMuted: '#94a3b8',
   placeholder: '#94a3b8',
   danger: '#dc2626',
+  dangerTint: '#fee2e2',
   success: '#16a34a',
+  successTint: '#dcfce7',
   overlay: 'rgba(0,0,0,0.5)',
 }
 
@@ -47,7 +51,9 @@ const DARK: ThemeColors = {
   textMuted: '#64748b',
   placeholder: '#64748b',
   danger: '#f87171',
+  dangerTint: '#450a0a',
   success: '#4ade80',
+  successTint: '#052e16',
   overlay: 'rgba(0,0,0,0.7)',
 }
 

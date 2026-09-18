@@ -13,6 +13,7 @@ import { useAuth } from '../auth/AuthContext'
 import { hasPermission } from '../auth/permissions'
 import { useCancelSale, useSalesHistory } from '../hooks/useSales'
 import { useBrandPalette } from '../theme/useBrandPalette'
+import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
 import type { Sale } from '../types'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
@@ -27,6 +28,8 @@ export default function SalesHistoryScreen() {
   const { membership } = useAuth()
   const canCancel = hasPermission(membership, 'cancel_sale')
   const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
 
   const { data: sales, isLoading, error } = useSalesHistory(7)
   const cancelSale = useCancelSale()
@@ -116,103 +119,105 @@ export default function SalesHistoryScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  header: {
-    padding: 16,
-    paddingBottom: 8,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  loading: {
-    marginTop: 8,
-  },
-  list: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 12,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
-  },
-  rowInfo: {
-    flex: 1,
-    marginRight: 8,
-  },
-  rowTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1e293b',
-  },
-  rowDate: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginTop: 2,
-  },
-  rowActions: {
-    alignItems: 'flex-end',
-    gap: 6,
-  },
-  rowTotal: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#334155',
-  },
-  badge: {
-    backgroundColor: '#fee2e2',
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#dc2626',
-  },
-  cancelButton: {
-    borderWidth: 1,
-    borderColor: '#dc2626',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  cancelButtonText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#dc2626',
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  emptyText: {
-    fontSize: 13,
-    color: '#94a3b8',
-    marginTop: 12,
-  },
-  textSuccess: {
-    color: '#16a34a',
-    marginTop: 4,
-  },
-  textDanger: {
-    color: '#dc2626',
-    marginTop: 4,
-  },
-})
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      padding: 16,
+      paddingBottom: 8,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    loading: {
+      marginTop: 8,
+    },
+    list: {
+      paddingHorizontal: 16,
+      paddingBottom: 24,
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 12,
+      marginBottom: 8,
+      shadowColor: '#000',
+      shadowOpacity: 0.04,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 1 },
+      elevation: 1,
+    },
+    rowInfo: {
+      flex: 1,
+      marginRight: 8,
+    },
+    rowTitle: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    rowDate: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    rowActions: {
+      alignItems: 'flex-end',
+      gap: 6,
+    },
+    rowTotal: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.textSecondary,
+    },
+    badge: {
+      backgroundColor: colors.dangerTint,
+      borderRadius: 999,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+    },
+    badgeText: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: colors.danger,
+    },
+    cancelButton: {
+      borderWidth: 1,
+      borderColor: colors.danger,
+      borderRadius: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    cancelButtonText: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.danger,
+    },
+    disabled: {
+      opacity: 0.5,
+    },
+    emptyText: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: 12,
+    },
+    textSuccess: {
+      color: colors.success,
+      marginTop: 4,
+    },
+    textDanger: {
+      color: colors.danger,
+      marginTop: 4,
+    },
+  })
+}
