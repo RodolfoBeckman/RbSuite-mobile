@@ -31,6 +31,11 @@ import {
   useUploadLogo,
 } from '../hooks/useBranding'
 import { useBusinessModules, useUpdateBusinessModules, type BusinessModules } from '../hooks/useBusinessModules'
+import {
+  useManageBranchPaymentMethods,
+  useUpdateBranchPaymentMethod,
+} from '../hooks/useBranchPaymentMethods'
+import { getErrorMessage } from '../utils/getErrorMessage'
 import { useLabels, useUpdateLabels } from '../hooks/useLabels'
 import { usePosLayout, useUpdatePosLayout } from '../hooks/usePosLayout'
 import {
@@ -69,6 +74,7 @@ const SECTIONS: {
     | 'etiquetas'
     | 'punto-de-venta'
     | 'modulos'
+    | 'metodos-de-pago'
     | 'impresora'
     | 'auditoria'
   label: string
@@ -80,6 +86,7 @@ const SECTIONS: {
   { key: 'etiquetas', label: 'Etiquetas', permission: 'manage_branding' },
   { key: 'punto-de-venta', label: 'Punto de venta', permission: 'manage_branding' },
   { key: 'modulos', label: 'Módulos', permission: 'manage_branding' },
+  { key: 'metodos-de-pago', label: 'Métodos de pago', permission: 'manage_branding' },
   { key: 'impresora', label: 'Impresora', permission: 'manage_branding' },
   { key: 'auditoria', label: 'Auditoría', permission: 'view_audit_log' },
 ]
@@ -147,6 +154,7 @@ export default function ConfiguracionScreen() {
       {activeSection === 'etiquetas' && <LabelsSection />}
       {activeSection === 'punto-de-venta' && <PosLayoutSection />}
       {activeSection === 'modulos' && <ModulesSection />}
+      {activeSection === 'metodos-de-pago' && <PaymentMethodsSection />}
       {activeSection === 'impresora' && <PrinterSection />}
       {activeSection === 'auditoria' && <AuditLogSection />}
     </SafeAreaView>
@@ -1000,6 +1008,90 @@ function ModulesSection() {
           </View>
         </View>
       ))}
+
+      {feedback && (
+        <Text style={feedback.type === 'success' ? styles.textSuccess : styles.textDanger}>
+          {feedback.text}
+        </Text>
+      )}
+    </ScrollView>
+  )
+}
+
+const PAYMENT_METHOD_LABELS: Record<string, { label: string; hint: string }> = {
+  cash: { label: 'Efectivo', hint: '' },
+  card: { label: 'Tarjeta', hint: '' },
+  transfer: { label: 'Transferencia', hint: '' },
+  fiado: {
+    label: 'Fiado',
+    hint: 'Venta a crédito con registro de deuda por cliente. Apagarlo aquí no afecta ventas ya hechas.',
+  },
+}
+
+function PaymentMethodsSection() {
+  const palette = useBrandPalette()
+  const colors = useThemeColors()
+  const styles = createStyles(colors)
+  const { data: branches } = useBranches()
+  const [branchId, setBranchId] = useState<string | null>(null)
+  const activeBranchId = branchId ?? branches?.[0]?.id ?? null
+
+  const { data: methods, isLoading } = useManageBranchPaymentMethods(activeBranchId)
+  const updateMethod = useUpdateBranchPaymentMethod()
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
+    null,
+  )
+
+  function handleToggle(id: string, isEnabled: boolean) {
+    if (!activeBranchId) return
+    setFeedback(null)
+    updateMethod.mutate(
+      { id, branchId: activeBranchId, isEnabled },
+      {
+        onSuccess: () => setFeedback({ type: 'success', text: 'Métodos de pago actualizados' }),
+        onError: (error) =>
+          setFeedback({ type: 'error', text: getErrorMessage(error, 'No se pudo guardar') }),
+      },
+    )
+  }
+
+  return (
+    <ScrollView style={styles.section} contentContainerStyle={styles.sectionContent}>
+      <Text style={styles.cardTitle}>Métodos de pago</Text>
+      <Text style={styles.cardSubtitle}>
+        Elige qué métodos aparecen en el Punto de Venta de cada sucursal.
+      </Text>
+
+      {branches && branches.length > 1 && (
+        <ChipRow
+          options={branches.map((b) => ({ value: b.id, label: b.name }))}
+          value={activeBranchId ?? ''}
+          onChange={setBranchId}
+        />
+      )}
+
+      {isLoading && <ActivityIndicator color={palette.primary} style={styles.loading} />}
+
+      {!isLoading &&
+        methods?.map((method) => {
+          const meta = PAYMENT_METHOD_LABELS[method.method] ?? { label: method.method, hint: '' }
+          return (
+            <View key={method.id} style={styles.card}>
+              <View style={styles.switchRow}>
+                <View style={styles.cardTopInfo}>
+                  <Text style={styles.cardName}>{meta.label}</Text>
+                  {!!meta.hint && <Text style={styles.cardCaption}>{meta.hint}</Text>}
+                </View>
+                <Switch
+                  value={method.isEnabled}
+                  onValueChange={(v) => handleToggle(method.id, v)}
+                  disabled={updateMethod.isPending}
+                  trackColor={{ true: palette.primary }}
+                />
+              </View>
+            </View>
+          )
+        })}
 
       {feedback && (
         <Text style={feedback.type === 'success' ? styles.textSuccess : styles.textDanger}>

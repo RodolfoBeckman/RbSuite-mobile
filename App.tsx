@@ -21,6 +21,7 @@ import DashboardScreen from './src/screens/DashboardScreen'
 import PosScreen from './src/screens/PosScreen'
 import CajaScreen from './src/screens/CajaScreen'
 import SalesHistoryScreen from './src/screens/SalesHistoryScreen'
+import ClientesScreen from './src/screens/ClientesScreen'
 import InventoryScreen from './src/screens/InventoryScreen'
 import ConfiguracionScreen from './src/screens/ConfiguracionScreen'
 
@@ -34,6 +35,7 @@ export type MainTabParamList = {
   Pos: undefined
   Caja: undefined
   Ventas: undefined
+  Clientes: undefined
   Inventario: undefined
   Configuracion: undefined
 }
@@ -47,6 +49,7 @@ const TAB_ICON: Record<keyof MainTabParamList, string> = {
   Pos: '🛒',
   Caja: '💵',
   Ventas: '🧾',
+  Clientes: '👥',
   Inventario: '📦',
   Configuracion: '⚙️',
 }
@@ -142,6 +145,11 @@ function MainTabs() {
         name="Ventas"
         component={SalesHistoryScreen}
         options={{ title: 'Ventas', tabBarLabel: labels.navVentas }}
+      />
+      <Tab.Screen
+        name="Clientes"
+        component={ClientesScreen}
+        options={{ title: 'Clientes', tabBarLabel: 'Clientes' }}
       />
       {canSeeInventory && (
         <Tab.Screen
