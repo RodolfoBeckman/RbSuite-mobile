@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -297,7 +299,10 @@ export default function PosScreen() {
       </TouchableOpacity>
 
       <Modal visible={cartOpen} animationType="slide" transparent onRequestClose={() => setCartOpen(false)}>
-        <View style={styles.modalBackdrop}>
+        <KeyboardAvoidingView
+          style={styles.modalBackdrop}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <TouchableOpacity style={styles.modalBackdropTap} onPress={() => setCartOpen(false)} />
           <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
@@ -501,7 +506,7 @@ export default function PosScreen() {
               )}
             </TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   )

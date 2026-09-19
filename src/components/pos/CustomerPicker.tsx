@@ -2,7 +2,9 @@ import { useState } from 'react'
 import {
   ActivityIndicator,
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -42,6 +44,12 @@ export default function CustomerPicker({
   function openCreateModal() {
     setNewCustomer({ name: query.trim(), phone: '' })
     setShowCreate(true)
+    // Cierra el picker de búsqueda antes de abrir el de alta — dos <Modal>
+    // nativos montados a la vez se pisan en RN (el segundo no se presenta
+    // hasta que se cierra el primero, sobre todo en iOS). La web ya hacía
+    // esto (CustomerPicker.tsx allá sí trae este setOpen(false)); se quedó
+    // fuera al portar a mobile.
+    setOpen(false)
   }
 
   function handleCreate() {
@@ -81,7 +89,10 @@ export default function CustomerPicker({
       )}
 
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
-        <View style={styles.modalContainer}>
+        <KeyboardAvoidingView
+          style={styles.modalContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <View style={styles.modalHeader}>
             <TextInput
               autoFocus
@@ -99,6 +110,7 @@ export default function CustomerPicker({
           {isLoading && <ActivityIndicator style={styles.loading} color={palette.primary} />}
 
           <FlatList
+            style={styles.resultsList}
             data={results ?? []}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
@@ -118,17 +130,21 @@ export default function CustomerPicker({
                 <Text style={styles.emptyText}>Sin resultados</Text>
               ) : null
             }
-            ListFooterComponent={
-              query.trim().length > 0 ? (
-                <TouchableOpacity style={styles.createOption} onPress={openCreateModal}>
-                  <Text style={[styles.createOptionText, { color: palette.dark }]}>
-                    + Nuevo cliente
-                  </Text>
-                </TouchableOpacity>
-              ) : null
-            }
           />
-        </View>
+
+          {/* Fuera del FlatList a propósito: como ListFooterComponent
+              depende de cómo esa lista maneje el caso "sin resultados" en
+              cada versión de RN, un elemento fijo aquí garantiza que el
+              alta rápida siempre esté visible y no dependa de eso — es
+              justo el caso que más importa (cliente nuevo = 0 resultados). */}
+          {query.trim().length > 0 && (
+            <TouchableOpacity style={styles.createOption} onPress={openCreateModal}>
+              <Text style={[styles.createOptionText, { color: palette.dark }]}>
+                + Nuevo cliente
+              </Text>
+            </TouchableOpacity>
+          )}
+        </KeyboardAvoidingView>
       </Modal>
 
       {showCreate && (
@@ -205,6 +221,9 @@ function createStyles(colors: ThemeColors) {
       backgroundColor: colors.surface,
       paddingTop: 48,
     },
+    resultsList: {
+      flex: 1,
+    },
     modalHeader: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -255,6 +274,8 @@ function createStyles(colors: ThemeColors) {
     createOption: {
       paddingHorizontal: 16,
       paddingVertical: 14,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
     },
     createOptionText: {
       fontSize: 14,
