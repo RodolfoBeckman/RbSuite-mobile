@@ -37,8 +37,16 @@ async function runAction(item: QueueAction): Promise<RunResult> {
       if (error) throw error
       return { ok: true }
     }
-    const { error } = await supabase.rpc('register_cash_movement', item.payload)
-    if (error) throw error
+    if (item.kind === 'register_cash_movement') {
+      const { error } = await supabase.rpc('register_cash_movement', item.payload)
+      if (error) throw error
+      return { ok: true }
+    }
+    // create_customer no pasa por una RPC (es un insert directo, como en
+    // useCreateCustomer) — un 23505 aquí significa que ya se sincronizó en
+    // un intento anterior de flush cortado a la mitad, no un rechazo real.
+    const { error } = await supabase.from('customers').insert(item.payload)
+    if (error && error.code !== '23505') throw error
     return { ok: true }
   } catch (error) {
     // Igual que en useCreateSale/useCaja: NetInfo manda sobre la forma del
@@ -61,6 +69,10 @@ function invalidateForAction(item: QueueAction, queryClient: QueryClient) {
   }
   if (item.kind === 'register_cash_movement') {
     queryClient.invalidateQueries({ queryKey: ['cash-movements', item.sessionId] })
+  }
+  if (item.kind === 'create_customer') {
+    queryClient.invalidateQueries({ queryKey: ['customers-search'] })
+    queryClient.invalidateQueries({ queryKey: ['customers-receivables'] })
   }
 }
 

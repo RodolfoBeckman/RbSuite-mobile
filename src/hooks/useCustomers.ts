@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../auth/AuthContext'
 import { supabase } from '../lib/supabase'
+import { findCachedCustomer, searchCachedCustomers, upsertCachedCustomer } from '../offline/customersCache'
+import { isDeviceOffline } from '../offline/isOffline'
+import { enqueue } from '../offline/queue'
+import { generateUuid } from '../offline/uuid'
 import type { PaymentMethod } from '../types'
 
 export interface Customer {
@@ -33,22 +37,33 @@ function mapCustomer(row: {
   }
 }
 
-// Mismos hooks que la web (src/hooks/useCustomers.ts en rb-suite).
+// Mismos hooks que la web (src/hooks/useCustomers.ts en rb-suite), más un
+// fallback a customersCache (AsyncStorage) cuando no hay señal — a
+// diferencia de la web, aquí un vendedor puede quedarse sin conexión a
+// mitad de una venta a fiado, y buscar/crear cliente no tenía ningún
+// respaldo offline (bug reportado: se veía como "Sin resultados" en vez de
+// avisar que no hay conexión).
 export function useSearchCustomers(term: string) {
   const trimmed = term.trim()
   return useQuery({
     queryKey: ['customers-search', trimmed],
     queryFn: async (): Promise<Customer[]> => {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('id, name, phone, notes, credit_limit, balance, is_active')
-        .eq('is_active', true)
-        .or(`name.ilike.%${trimmed}%,phone.ilike.%${trimmed}%`)
-        .order('name')
-        .limit(10)
+      try {
+        const { data, error } = await supabase
+          .from('customers')
+          .select('id, name, phone, notes, credit_limit, balance, is_active')
+          .eq('is_active', true)
+          .or(`name.ilike.%${trimmed}%,phone.ilike.%${trimmed}%`)
+          .order('name')
+          .limit(10)
 
-      if (error) throw error
-      return (data ?? []).map(mapCustomer)
+        if (error) throw error
+        return (data ?? []).map(mapCustomer)
+      } catch (error) {
+        const offline = await isDeviceOffline()
+        if (!offline) throw error
+        return searchCachedCustomers(trimmed)
+      }
     },
     enabled: trimmed.length > 0,
   })
@@ -58,14 +73,21 @@ export function useCustomer(customerId: string | null) {
   return useQuery({
     queryKey: ['customer', customerId],
     queryFn: async (): Promise<Customer> => {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('id, name, phone, notes, credit_limit, balance, is_active')
-        .eq('id', customerId)
-        .single()
+      try {
+        const { data, error } = await supabase
+          .from('customers')
+          .select('id, name, phone, notes, credit_limit, balance, is_active')
+          .eq('id', customerId)
+          .single()
 
-      if (error) throw error
-      return mapCustomer(data)
+        if (error) throw error
+        return mapCustomer(data)
+      } catch (error) {
+        const offline = await isDeviceOffline()
+        const cached = offline ? await findCachedCustomer(customerId!) : null
+        if (cached) return cached
+        throw error
+      }
     },
     enabled: !!customerId,
   })
@@ -77,18 +99,41 @@ export function useCreateCustomer() {
 
   return useMutation({
     mutationFn: async (input: { name: string; phone?: string }): Promise<Customer> => {
-      const { data, error } = await supabase
-        .from('customers')
-        .insert({
-          business_id: membership!.businessId,
-          name: input.name,
-          phone: input.phone || null,
-        })
-        .select('id, name, phone, notes, credit_limit, balance, is_active')
-        .single()
+      const row = {
+        id: generateUuid(),
+        business_id: membership!.businessId,
+        name: input.name,
+        phone: input.phone || null,
+      }
 
-      if (error) throw error
-      return mapCustomer(data)
+      try {
+        const { data, error } = await supabase
+          .from('customers')
+          .insert(row)
+          .select('id, name, phone, notes, credit_limit, balance, is_active')
+          .single()
+
+        if (error) throw error
+        const customer = mapCustomer(data)
+        await upsertCachedCustomer(customer)
+        return customer
+      } catch (error) {
+        const offline = await isDeviceOffline()
+        if (!offline) throw error
+
+        await enqueue({ id: row.id, kind: 'create_customer', payload: row })
+        const customer: Customer = {
+          id: row.id,
+          name: row.name,
+          phone: row.phone,
+          notes: null,
+          creditLimit: null,
+          balance: 0,
+          isActive: true,
+        }
+        await upsertCachedCustomer(customer)
+        return customer
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers-search'] })

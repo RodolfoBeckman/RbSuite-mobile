@@ -6,7 +6,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 // decenas de acciones en un mal día sin señal), no justifica SQLite.
 const STORAGE_KEY = 'rb-suite-offline-queue'
 
-export type QueueActionKind = 'create_sale' | 'open_cash_session' | 'register_cash_movement'
+export type QueueActionKind =
+  | 'create_sale'
+  | 'open_cash_session'
+  | 'register_cash_movement'
+  | 'create_customer'
 
 interface BaseQueueAction {
   id: string
@@ -57,7 +61,21 @@ export interface RegisterCashMovementAction extends BaseQueueAction {
   }
 }
 
-export type QueueAction = CreateSaleAction | OpenCashSessionAction | RegisterCashMovementAction
+export interface CreateCustomerAction extends BaseQueueAction {
+  kind: 'create_customer'
+  payload: {
+    id: string
+    business_id: string
+    name: string
+    phone: string | null
+  }
+}
+
+export type QueueAction =
+  | CreateSaleAction
+  | OpenCashSessionAction
+  | RegisterCashMovementAction
+  | CreateCustomerAction
 
 export async function loadQueue(): Promise<QueueAction[]> {
   const raw = await AsyncStorage.getItem(STORAGE_KEY)
@@ -77,6 +95,7 @@ type NewQueueAction =
   | Omit<CreateSaleAction, 'createdAt' | 'attempts' | 'status'>
   | Omit<OpenCashSessionAction, 'createdAt' | 'attempts' | 'status'>
   | Omit<RegisterCashMovementAction, 'createdAt' | 'attempts' | 'status'>
+  | Omit<CreateCustomerAction, 'createdAt' | 'attempts' | 'status'>
 
 export async function enqueue(action: NewQueueAction): Promise<void> {
   const queue = await loadQueue()

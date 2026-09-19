@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '../lib/supabase'
 import { warmBranchesCache } from '../offline/branchesCache'
+import { warmCustomersCache } from '../offline/customersCache'
 import type { Membership } from '../types'
 
 const MEMBERSHIP_CACHE_KEY = 'rb-suite-membership-cache'
@@ -82,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await AsyncStorage.setItem(MEMBERSHIP_CACHE_KEY, JSON.stringify(resolved))
         await applyResolved(resolved)
         warmBranchesCache()
+        warmCustomersCache()
       } catch (error) {
         console.error('No se pudo cargar la membresía del usuario', error)
         const cached = await AsyncStorage.getItem(MEMBERSHIP_CACHE_KEY)
