@@ -14,7 +14,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
-import { usePrintersDiscovery, type DeviceInfo } from 'react-native-esc-pos-printer'
+// TEMPORAL: ver nota junto a PrinterSection más abajo — comentado para
+// poder probar en Expo Go sin el dev client.
+// import { usePrintersDiscovery, type DeviceInfo } from 'react-native-esc-pos-printer'
 import { printTestTicket } from '../printing/printReceipt'
 import {
   clearPairedPrinter,
@@ -1102,6 +1104,27 @@ function PaymentMethodsSection() {
   )
 }
 
+// TEMPORAL: deshabilitada a pedido del usuario para poder probar el
+// resto de la app en Expo Go sin el dev client — usePrintersDiscovery
+// viene de react-native-esc-pos-printer (módulo nativo) y hace que la
+// app truene al arrancar en Expo Go incluso si nunca se abre esta
+// pantalla. Descomentar junto con el import de arriba en cuanto haya
+// cuenta de Apple Developer y el dev client de iOS esté listo.
+function PrinterSection() {
+  const styles = createStyles(useThemeColors())
+  return (
+    <ScrollView style={styles.section} contentContainerStyle={styles.sectionContent}>
+      <Text style={styles.cardTitle}>Impresora de tickets</Text>
+      <Text style={styles.cardSubtitle}>
+        Deshabilitado temporalmente para poder probar la app en Expo Go. Las ventas se pueden
+        compartir como PDF mientras tanto.
+      </Text>
+    </ScrollView>
+  )
+}
+
+/* ---- Implementación real (descomentar junto con el import de arriba) ----
+
 // El emparejamiento se guarda por dispositivo (AsyncStorage, ver
 // printerStorage.ts), no por negocio — cada caja/celular con su propia
 // impresora térmica. Requiere el dev client de EAS (no funciona en Expo
@@ -1220,6 +1243,8 @@ function PrinterSection() {
     </ScrollView>
   )
 }
+
+---------------------------------------------------------------------- */
 
 const ACTION_LABEL: Record<string, string> = {
   cancel_sale: 'Canceló una venta',

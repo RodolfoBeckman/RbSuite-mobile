@@ -1,5 +1,34 @@
-import { Printer, PrinterConstants } from 'react-native-esc-pos-printer'
+// TEMPORAL: impresión Bluetooth (react-native-esc-pos-printer) comentada
+// a pedido del usuario para poder probar el resto de la app en Expo Go
+// sin el dev client — este módulo nativo hace que la app truene al
+// arrancar en Expo Go ("EscPosPrinter could not be found"), incluso si
+// nunca se llega a llamar printReceipt/printTestTicket. Todo lo real
+// sigue abajo, comentado — descomentar en cuanto haya cuenta de Apple
+// Developer y el dev client de iOS esté listo. Mientras tanto, el flujo
+// normal de la app (PosScreen/SalesHistoryScreen) cae solo al PDF
+// (shareReceiptPdf) porque nunca habrá una impresora emparejada con la
+// pantalla de Configuración > Impresora también deshabilitada.
+
+// import { Printer, PrinterConstants } from 'react-native-esc-pos-printer'
 import type { SaleReceipt } from '../hooks/useSaleReceipt'
+
+export class NoPrinterPairedError extends Error {
+  constructor() {
+    super('No hay una impresora configurada. Ve a Configuración > Impresora de tickets.')
+    this.name = 'NoPrinterPairedError'
+  }
+}
+
+export async function printReceipt(_receipt: SaleReceipt): Promise<void> {
+  throw new Error('Impresión Bluetooth deshabilitada temporalmente — usa "Generar PDF" mientras tanto.')
+}
+
+export async function printTestTicket(_paired: { target: string; deviceName: string }): Promise<void> {
+  throw new Error('Impresión Bluetooth deshabilitada temporalmente — usa "Generar PDF" mientras tanto.')
+}
+
+/* ---- Implementación real (descomentar junto con el import de arriba) ----
+
 import { getPairedPrinter } from './printerStorage'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
@@ -16,13 +45,6 @@ const PAYMENT_LABEL: Record<string, string> = {
   card: 'Tarjeta',
   transfer: 'Transferencia',
   fiado: 'Cargo a cuenta',
-}
-
-export class NoPrinterPairedError extends Error {
-  constructor() {
-    super('No hay una impresora configurada. Ve a Configuración > Impresora de tickets.')
-    this.name = 'NoPrinterPairedError'
-  }
 }
 
 // Manda el ticket a la impresora ya emparejada (ver printerStorage) usando
@@ -168,3 +190,5 @@ export async function printTestTicket(paired: { target: string; deviceName: stri
     return result
   })
 }
+
+---------------------------------------------------------------------- */
