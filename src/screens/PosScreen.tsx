@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
   FlatList,
@@ -12,10 +12,13 @@ import {
 } from 'react-native'
 import BranchPicker from '../components/BranchPicker'
 import CatalogGrid from '../components/pos/CatalogGrid'
+import CustomerPicker from '../components/pos/CustomerPicker'
 import DepartmentList from '../components/pos/DepartmentList'
 import ScanTicket from '../components/pos/ScanTicket'
 import { useActiveBranch } from '../hooks/useActiveBranch'
 import { useBusinessModules } from '../hooks/useBusinessModules'
+import { useEnabledPaymentMethods } from '../hooks/useBranchPaymentMethods'
+import type { Customer } from '../hooks/useCustomers'
 import { usePosCatalog } from '../hooks/usePosCatalog'
 import { usePosLayout } from '../hooks/usePosLayout'
 import { useCreateSale } from '../hooks/useCreateSale'
@@ -28,14 +31,16 @@ import { useBrandPalette } from '../theme/useBrandPalette'
 import { useThemeColors, type ThemeColors } from '../theme/useThemeColors'
 import PendingSyncBanner from '../offline/PendingSyncBanner'
 import type { CartLine, CatalogItem, PaymentMethod } from '../types'
+import { getErrorMessage } from '../utils/getErrorMessage'
 
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
 
-const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
-  { value: 'cash', label: 'Efectivo' },
-  { value: 'card', label: 'Tarjeta' },
-  { value: 'transfer', label: 'Transferencia' },
-]
+const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  cash: 'Efectivo',
+  card: 'Tarjeta',
+  transfer: 'Transferencia',
+  fiado: 'Fiado',
+}
 
 export default function PosScreen() {
   const activeBranchId = useActiveBranch()
@@ -55,6 +60,7 @@ export default function PosScreen() {
   const [cart, setCart] = useState<Map<string, CartLine>>(new Map())
   const [cartOpen, setCartOpen] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
+  const [customer, setCustomer] = useState<Customer | null>(null)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null,
   )
@@ -63,6 +69,15 @@ export default function PosScreen() {
 
   const createSale = useCreateSale()
   const { data: pairedPrinter } = usePairedPrinter()
+  const { data: enabledMethods } = useEnabledPaymentMethods(activeBranchId)
+
+  useEffect(() => {
+    if (!enabledMethods?.length) return
+    if (!enabledMethods.includes(paymentMethod)) {
+      setPaymentMethod(enabledMethods[0])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabledMethods])
 
   const filteredCatalog = useMemo(() => {
     if (!catalog) return []
@@ -98,9 +113,10 @@ export default function PosScreen() {
 
   function handleCheckout() {
     if (!activeBranchId || cartLines.length === 0) return
+    if (paymentMethod === 'fiado' && !customer) return
     setFeedback(null)
     createSale.mutate(
-      { branchId: activeBranchId, cartLines, paymentMethod, total },
+      { branchId: activeBranchId, cartLines, paymentMethod, total, customerId: customer?.id },
       {
         onSuccess: ({ saleId, folio, queued }) => {
           setFeedback({
@@ -117,6 +133,7 @@ export default function PosScreen() {
           // registró en el servidor.
           setLastSaleId(queued ? null : saleId)
           setCart(new Map())
+          setCustomer(null)
           setTimeout(() => {
             setCartOpen(false)
             setFeedback(null)
@@ -125,7 +142,7 @@ export default function PosScreen() {
         onError: (error) => {
           setFeedback({
             type: 'error',
-            text: error instanceof Error ? error.message : 'No se pudo registrar la venta',
+            text: getErrorMessage(error, 'No se pudo registrar la venta'),
           })
         },
       },
@@ -145,7 +162,7 @@ export default function PosScreen() {
     } catch (error) {
       setFeedback({
         type: 'error',
-        text: error instanceof Error ? error.message : 'No se pudo generar el ticket',
+        text: getErrorMessage(error, 'No se pudo generar el ticket'),
       })
     } finally {
       setPrinting(false)
@@ -259,13 +276,13 @@ export default function PosScreen() {
             </View>
 
             <View style={styles.paymentRow}>
-              {PAYMENT_METHODS.map((method) => {
-                const active = paymentMethod === method.value
+              {(enabledMethods ?? ['cash', 'card', 'transfer']).map((method) => {
+                const active = paymentMethod === method
                 return (
                   <TouchableOpacity
-                    key={method.value}
+                    key={method}
                     activeOpacity={0.75}
-                    onPress={() => setPaymentMethod(method.value)}
+                    onPress={() => setPaymentMethod(method)}
                     style={[
                       styles.paymentChip,
                       active && { borderColor: palette.primary, backgroundColor: palette.tint },
@@ -274,12 +291,18 @@ export default function PosScreen() {
                     <Text
                       style={[styles.paymentChipText, active && { color: palette.dark }]}
                     >
-                      {method.label}
+                      {PAYMENT_METHOD_LABEL[method]}
                     </Text>
                   </TouchableOpacity>
                 )
               })}
             </View>
+
+            {paymentMethod === 'fiado' && (
+              <View style={styles.customerBlock}>
+                <CustomerPicker value={customer} onChange={setCustomer} />
+              </View>
+            )}
 
             {feedback && (
               <View style={styles.feedbackBlock}>
@@ -315,10 +338,17 @@ export default function PosScreen() {
               style={[
                 styles.checkoutButton,
                 { backgroundColor: palette.primary },
-                (cartLines.length === 0 || createSale.isPending) && styles.checkoutButtonDisabled,
+                (cartLines.length === 0 ||
+                  createSale.isPending ||
+                  (paymentMethod === 'fiado' && !customer)) &&
+                  styles.checkoutButtonDisabled,
               ]}
               activeOpacity={0.8}
-              disabled={cartLines.length === 0 || createSale.isPending}
+              disabled={
+                cartLines.length === 0 ||
+                createSale.isPending ||
+                (paymentMethod === 'fiado' && !customer)
+              }
               onPress={handleCheckout}
             >
               {createSale.isPending ? (
@@ -503,16 +533,21 @@ function createStyles(colors: ThemeColors) {
     },
     paymentRow: {
       flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: 8,
       marginTop: 12,
     },
     paymentChip: {
-      flex: 1,
+      minWidth: '30%',
+      flexGrow: 1,
       borderWidth: 1,
       borderColor: colors.border,
       borderRadius: 10,
       paddingVertical: 10,
       alignItems: 'center',
+    },
+    customerBlock: {
+      marginTop: 12,
     },
     paymentChipText: {
       fontSize: 12,

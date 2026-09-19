@@ -15,6 +15,7 @@ const PAYMENT_LABEL: Record<string, string> = {
   cash: 'Efectivo',
   card: 'Tarjeta',
   transfer: 'Transferencia',
+  fiado: 'Cargo a cuenta',
 }
 
 // Alternativa para cuando no hay una impresora térmica emparejada — mismo
@@ -71,6 +72,13 @@ function receiptHtml(receipt: SaleReceipt): string {
         <div class="total"><div class="row"><span>TOTAL</span><span>${currency.format(receipt.total)}</span></div></div>
         <div class="hr"></div>
         ${paymentsHtml}
+        ${
+          receipt.customerCharge
+            ? `<div class="hr"></div>
+        <p class="center bold">Cargo a cuenta — ${receipt.customerCharge.customerName}</p>
+        <div class="row"><span>Saldo actual</span><span>${currency.format(receipt.customerCharge.balance)}</span></div>`
+            : ''
+        }
         <div class="hr"></div>
         <p class="center">¡Gracias por su compra!</p>
       </body>

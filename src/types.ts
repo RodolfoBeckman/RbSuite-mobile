@@ -47,7 +47,7 @@ export interface CartLine {
   quantity: number
 }
 
-export type PaymentMethod = 'cash' | 'card' | 'transfer'
+export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'fiado'
 
 export type CashSessionStatus = 'open' | 'closed'
 export type CashMovementType = 'sale' | 'cash_in' | 'cash_out' | 'adjustment'

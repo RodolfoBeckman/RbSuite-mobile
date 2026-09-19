@@ -22,6 +22,7 @@ export interface CreateSaleAction extends BaseQueueAction {
   payload: {
     id: string
     branch_id: string
+    customer_id: string | null
     items: Array<{
       item_type: 'product' | 'service'
       business_product_id: string | null

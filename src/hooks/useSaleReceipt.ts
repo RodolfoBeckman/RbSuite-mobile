@@ -14,6 +14,11 @@ export interface SaleReceiptPayment {
   amount: number
 }
 
+export interface SaleReceiptCustomerCharge {
+  customerName: string
+  balance: number
+}
+
 export interface SaleReceipt {
   folio: number
   createdAt: string
@@ -26,6 +31,7 @@ export interface SaleReceipt {
   branchPhone: string | null
   items: SaleReceiptItem[]
   payments: SaleReceiptPayment[]
+  customerCharge: SaleReceiptCustomerCharge | null
 }
 
 interface SaleRow {
@@ -110,6 +116,21 @@ export async function fetchSaleReceipt(saleId: string): Promise<SaleReceipt> {
     amount: Number(row.amount),
   }))
 
+  let customerCharge: SaleReceiptCustomerCharge | null = null
+  if (payments.some((p) => p.method === 'fiado')) {
+    const { data: chargeRow } = await supabase
+      .from('customer_account_movements')
+      .select('customer:customers(name, balance)')
+      .eq('sale_id', saleId)
+      .eq('type', 'charge')
+      .maybeSingle<{ customer: { name: string; balance: number } | { name: string; balance: number }[] | null }>()
+
+    const customer = one(chargeRow?.customer ?? null)
+    if (customer) {
+      customerCharge = { customerName: customer.name, balance: Number(customer.balance) }
+    }
+  }
+
   return {
     folio: sale.folio,
     createdAt: sale.created_at,
@@ -122,6 +143,7 @@ export async function fetchSaleReceipt(saleId: string): Promise<SaleReceipt> {
     branchPhone: branch?.phone ?? null,
     items,
     payments,
+    customerCharge,
   }
 }
 

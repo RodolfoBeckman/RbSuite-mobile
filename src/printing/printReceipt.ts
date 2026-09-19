@@ -15,6 +15,7 @@ const PAYMENT_LABEL: Record<string, string> = {
   cash: 'Efectivo',
   card: 'Tarjeta',
   transfer: 'Transferencia',
+  fiado: 'Cargo a cuenta',
 }
 
 export class NoPrinterPairedError extends Error {
@@ -105,6 +106,21 @@ export async function printReceipt(receipt: SaleReceipt): Promise<void> {
       await Printer.addTextLine(printer, {
         left: PAYMENT_LABEL[payment.method] ?? payment.method,
         right: currency.format(payment.amount),
+        gapSymbol: ' ',
+      })
+      await printer.addFeedLine()
+    }
+
+    if (receipt.customerCharge) {
+      await printer.addTextAlign(PrinterConstants.ALIGN_CENTER)
+      await printer.addTextStyle({ em: PrinterConstants.TRUE })
+      await printer.addText(`Cargo a cuenta — ${receipt.customerCharge.customerName}`)
+      await printer.addFeedLine()
+      await printer.addTextStyle()
+      await printer.addTextAlign(PrinterConstants.ALIGN_LEFT)
+      await Printer.addTextLine(printer, {
+        left: 'Saldo actual',
+        right: currency.format(receipt.customerCharge.balance),
         gapSymbol: ' ',
       })
       await printer.addFeedLine()
